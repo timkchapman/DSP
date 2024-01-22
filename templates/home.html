@@ -47,6 +47,17 @@
     </style>
 </head>
 <body>
+    {% with messages = get_flashed_messages() %}
+    <div class="flash-messages">
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li class="flash-message">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endwith %}
     <h1>Welcome to LARPBook</h1>
     <p>Discover and promote amazing events!</p>
 
@@ -58,14 +69,24 @@
 
     <div class="event-list">
         <h2>Latest Events:</h2>
-        {% for event in latest_events %}
-        <div class="event">
-            <h2>{{ event.name }}</h2>
-            <p>{{ event.description }}</p>
-        </div>
-        {% endfor %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Event Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in latest_events %}
+                <tr>
+                    <td>{{ event.name }}</td>
+                    <td>{{ event.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    
 
-    <!-- Add any additional content or styling as needed -->
 </body>
 </html>

@@ -23,7 +23,7 @@ class Event(db.Model):
     organizer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     event_name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
-    lattitude = db.Column(db.Float, nullable=False)
+    latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     #date = db.Column(db.DateTime, nullable=False)
     #time = db.Column(db.DateTime, nullable=False)
@@ -56,13 +56,32 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         email = request.form['email']
+
+        # Check if username already exists
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username is already taken. Please choose a different one.', 'danger')
+            return redirect(url_for('register'))
+        
+        #Check if password and confirm_password match
+        if password != confirm_password:
+            flash('Passwords do not match. Please try again.', 'danger')
+            return redirect(url_for('register'))
+
+        # Check if email already exists
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
+            flash('Email address is already registered. Please use a different email.', 'danger')
+            return redirect(url_for('register'))
+
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         user = User(username=username, password=hashed_password, email=email)
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You can now log in.', 'success')
-        return redirect(url_for('home'))
+        return redirect(url_for('login'))
     return render_template('register.html')
 
 # User Login
@@ -111,7 +130,32 @@ def create_event():
             flash('Failed to get your location. Please try again.', 'danger')
     return render_template('create_event.html')
 
+def create_sample_data():
+    # Check if sample data already exists
+    if not User.query.filter_by(username='user1').first():
+        # Create sample data
+        user1 = User(username='user1', password='password1', email='user1@example.com')
+        user2 = User(username='user2', password='password2', email='user2@example.com')
+
+        # Add sample users to the database
+        db.session.add(user1)
+        db.session.add(user2)
+
+    if not Event.query.filter_by(event_name='event1').first():
+        # Create sample data
+        event1 = Event(organizer_id=1, event_name='Event 1', description='Description 1', latitude=12.345, longitude=67.890)
+        event2 = Event(organizer_id=2, event_name='Event 2', description='Description 2', latitude=23.456, longitude=78.901)
+
+        # Add sample events to the database
+        db.session.add(event1)
+        db.session.add(event2)
+
+    # Commit changes to the database
+    db.session.commit()
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        if not User.query.filter_by(username='user1').first() or not Event.query.filter_by(event_name='event1').first():
+            create_sample_data()
     app.run(debug=True)

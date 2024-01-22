@@ -47,12 +47,25 @@
     </style>
 </head>
 <body>
+    {% with messages = get_flashed_messages() %}
+    <div class="flash-messages">
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li class="flash-message">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endwith %}
     <h1>Register</h1>
     <form method="POST">
         <label for="username">Username</label>
         <input type="text" name="username" required>
         <label for="password">Password</label>
         <input type="password" name="password" required>
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" name="confirm_password" required>
         <label for="email">Email</label>
         <input type="text" name="email" required>
         <button type="submit">Register</button>

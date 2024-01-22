@@ -47,6 +47,17 @@
     </style>
 </head>
 <body>
+    {% with messages = get_flashed_messages() %}
+    <div class="flash-messages">
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li class="flash-message">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endwith %}
     <h1>Login</h1>
     <form method="POST">
         <label for="username">Username</label>
