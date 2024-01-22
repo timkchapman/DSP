@@ -1,30 +1,48 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+import requests
 
-app = Flask(__name__, template_folder='src/templates')
-app.config['Secret_Key'] = 'Password1'
+geolocation_api_url ='https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyDzQRqjCQsbPfVqHd1bySNkPOCMpTLFoL8'
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'Password1'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
 # define models
 class User(db.Model):
-    user_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(50), unique=True, nullable=False)
 
 class Event(db.Model):
-    event_id = db.Column(db.Integer, primary_key=True)
-    organizer_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    organizer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     event_name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=False)
-    location = db.Column(db.String(50), unique=True, nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
-    time = db.Column(db.DateTime, nullable=False)
+    lattitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    #date = db.Column(db.DateTime, nullable=False)
+    #time = db.Column(db.DateTime, nullable=False)
 
     organizer = db.relationship('User', backref='events')
+
+def get_location():
+    try:
+        response = requests.post(geolocation_api_url)
+        if response.status_code == 200:
+            data = response.json()
+            latitude = data['location']['lat']
+            longitude = data['location']['lng']
+            return latitude, longitude
+        else:
+            return None
+    except Exception as e:
+        print("Error:", str(e))
+        return None
 
 # Routes
 @app.route('/')
@@ -38,12 +56,13 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        email = request.form['email']
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        user = User(username=username, password=hashed_password)
+        user = User(username=username, password=hashed_password, email=email)
         db.session.add(user)
         db.session.commit()
         flash('Your account has been created! You can now log in.', 'success')
-        return redirect(url_for('login'))
+        return redirect(url_for('home'))
     return render_template('register.html')
 
 # User Login
@@ -56,7 +75,7 @@ def login():
         if user and bcrypt.check_password_hash(user.password, password):
             session['user_id'] = user.id
             flash('Logged in successfully', 'success')
-            return redirect(url_for('create_event'))
+            return redirect(url_for('home'))
         else:
             flash('Login failed. Please check your credentials.', 'danger')
     return render_template('login.html')
@@ -79,12 +98,17 @@ def create_event():
         name = request.form['name']
         description = request.form['description']
         organizer_id = session['user_id']
-        event = Event(name=name, description=description, organizer_id=organizer_id)
-        db.session.add(event)
-        db.session.commit()
-        flash('Event created successfully', 'success')
-        return redirect(url_for('home'))
-    
+        latitude, longitude = get_location()
+        if latitude is not None and longitude is not None:
+            event = Event(name=name, description=description, organizer_id=organizer_id,
+                          location=f"(latitude, longitude)")
+
+            db.session.add(event)
+            db.session.commit()
+            flash('Event created successfully', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Failed to get your location. Please try again.', 'danger')
     return render_template('create_event.html')
 
 if __name__ == '__main__':
