@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Home</title>
     <style>
@@ -46,6 +47,7 @@
         }
     </style>
 </head>
+
 <body>
     {% with messages = get_flashed_messages() %}
     <div class="flash-messages">
@@ -61,8 +63,31 @@
     <h1>Welcome to LARPBook</h1>
     <p>Discover and promote amazing events!</p>
 
+    <button onclick="getLocation()">GetLocation</button>
+    <p id="demo"></p>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                document.getElementById("demo").innerHTML = "Geolocation is not supported by this browser.";
+            }
+        }
+
+        function showPosition(position) {
+            var latitude = position.coords.latitude;
+            var longitude = position.coords.longitude;
+            document.getElementById("demo").innerHTML = "Latitude: " + latitude + "<br>Longitude: " + longitude;
+        }
+    </script>
+
     <div class="button-container">
+        {% if 'user_id' in session %}
+        <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+        {% else %}
         <a href="{{ url_for('login') }}" class="btn">Login</a>
+        {% endif %}
         <a href="{{ url_for('register') }}" class="btn">Register</a>
         <a href="{{ url_for('create_event') }}" class="btn">Create Event</a>
     </div>
@@ -72,21 +97,35 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th>Organiser Name</th>
                     <th>Event Name</th>
+                    <th>Location</th>
                     <th>Description</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
                 </tr>
             </thead>
             <tbody>
-                {% for event in latest_events %}
+                {% set max_len = latest_events|length %}
+                {% for i in range(max_len) %}
                 <tr>
-                    <td>{{ event.name }}</td>
-                    <td>{{ event.description }}</td>
+                    <td>{{ latest_events[i].organizer.username }}</td>
+                    <td>{{ latest_events[i].eventName }}</td>
+                    <td>{{ latest_descriptions[i].address }}</td>
+                    <td>{{ latest_descriptions[i].eventDescription }}</td>
+                    <td>{{ latest_descriptions[i].startDate }}</td>
+                    <td>{{ latest_descriptions[i].endDate }}</td>
+                    <td>{{ latest_descriptions[i].startTime.strftime("%I %p") }}</td>
+                    <td>{{ latest_descriptions[i].endTime.strftime("%I %p") }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    
+
 
 </body>
+
 </html>

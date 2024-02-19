@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Register</title>
     <style>
@@ -46,6 +47,7 @@
         }
     </style>
 </head>
+
 <body>
     {% with messages = get_flashed_messages() %}
     <div class="flash-messages">
@@ -68,12 +70,25 @@
         <input type="password" name="confirm_password" required>
         <label for="email">Email</label>
         <input type="text" name="email" required>
+        <label for="firstname">First Name</label>
+        <input type="text" name="firstname" required>
+        <label for="lastname">Last Name</label>
+        <input type="text" name="lastname" required>
+        <label type="birthdate">Birthdate</label>
+        <input type="date" name="birthdate" required>
+        <label type="isOrganiser">Are you an organiser?</label>
+        <input type="checkbox" name="isOrganiser">
         <button type="submit">Register</button>
     </form>
 
     <div class="button-container">
+        {% if 'user_id' in session %}
+        <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+        {% else %}
         <a href="{{ url_for('login') }}" class="btn">Login</a>
+        {% endif %}
         <a href="{{ url_for('home')  }}" class="btn">Home</a>
     </div>
 </body>
+
 </html>
