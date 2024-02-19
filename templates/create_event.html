@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Create Event</title>
     <style>
@@ -46,6 +47,7 @@
         }
     </style>
 </head>
+
 <body>
     {% with messages = get_flashed_messages() %}
     <div class="flash-messages">
@@ -60,19 +62,77 @@
     {% endwith %}
     <h1>Create Event</h1>
     {% if 'user_id' not in session %}
-        <p>You must be logged in to create an event.</p>
-        <a href="{{ url_for('login') }}">Login</a>
+    <p>You must be logged in to create an event.</p>
+    <a href="{{ url_for('login') }}">Login</a>
     {% else %}
-        <form method="POST">
-            <label for="name">Event Name</label>
-            <input type="text" name="name" required>
-            <label for="description">Event Description</label>
-            <textarea name="description" required></textarea>
-            <button type="submit">Create Event</button>
-        </form>
+    <form method="POST">
+        <label for="name">Event Name</label>
+        <input type="text" name="name" required><br>
+        <label for="description">Event Description</label>
+        <textarea name="description" required></textarea><br>
+        <label for="start_date">Start Date</label>
+        <input type="date" name="start_date" required><br>
+        <label for="end_date">End Date</label>
+        <input type="date" name="end_date" required><br>
+        <label for="start_time">Start Time</label>
+        <input type="time" name="start_time" required><br>
+        <label for="end_time">End Time</label>
+        <input type="time" name="end_time" required><br>
+        <label for="address">Event Address</label>
+        <input type="text" id="address" name="address" placeholder="Enter address" required>
+        <div id="search-results"></div>
+
+        <script>
+            // Function to perform geocoding search
+            function searchAddress(query) {
+                var accessToken = 'pk.eyJ1IjoidGlta2MiLCJhIjoiY2xzc3czcTg2MGdtbzJqcGdxdmxkdGI0NiJ9.ZamkOoED2_ug0q_Meb7drw';
+                var baseUrl = 'https://api.mapbox.com/geocoding/v5/mapbox.places/';
+                var endpoint = baseUrl + encodeURIComponent(query) + '.json?access_token=' + accessToken;
+
+                fetch(endpoint)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Display search results
+                        var results = data.features;
+                        var resultsContainer = document.getElementById('search-results');
+                        resultsContainer.innerHTML = ''; // Clear previous results
+
+                        results.forEach(feature => {
+                            var address = feature.place_name;
+                            var coordinates = feature.center;
+
+                            var resultItem = document.createElement('div');
+                            resultItem.textContent = address;
+                            resultItem.addEventListener('click', function () {
+                                // Populate address field with selected address
+                                document.getElementById('address').value = address;
+                                // Optionally, you can also store the coordinates for further use
+                            });
+
+                            resultsContainer.appendChild(resultItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching search results:', error);
+                    });
+            }
+
+            // Event listener for input field
+            var inputField = document.getElementById('address');
+            inputField.addEventListener('input', function (event) {
+                var query = event.target.value;
+                if (query.length > 2) {
+                    searchAddress(query);
+                }
+            });
+        </script>
+        <button type="submit">Create Event</button>
+    </form>
     {% endif %}
 
-    <div class = "button-container">
+    <div class="button-container">
         <a href="{{ url_for('home') }}" class="btn">Home</a>
+    </div>
 </body>
+
 </html>

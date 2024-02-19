@@ -373,7 +373,7 @@ def logout():
     flash('Logged out successfully', 'success')
     return redirect(url_for('login'))
 
-# Create Event (Requires login)
+# Create Event
 @app.route('/create_event', methods=['GET', 'POST'])
 def create_event():
     if 'user_id' not in session:
@@ -384,18 +384,37 @@ def create_event():
         name = request.form['name']
         description = request.form['description']
         organizerId = session['user_id']
-        latitude, longitude = get_location()
+        start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d')
+        end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d')
+        start_time = datetime.strptime(request.form['start_time'], '%H:%M').time()
+        end_time = datetime.strptime(request.form['end_time'], '%H:%M').time()
+        address = request.form['address']
+        latitude, longitude = geocode(address)
+        
         if latitude is not None and longitude is not None:
-            event = Event(name=name, description=description, organizerId=organizerId,
-                          location=f"(latitude, longitude)")
-
+            # Create Event record
+            event = Event(eventName=name, organizerId=organizerId)
             db.session.add(event)
+            db.session.flush()  # Ensure eventId is available
+            
+            # Create EventDetails record
+            event_details = EventDetails(eventId=event.eventId,
+                                          eventDescription=description,
+                                          startDate=start_date,
+                                          endDate=end_date,
+                                          startTime=start_time,
+                                          endTime=end_time,
+                                          latitude=latitude,
+                                          longitude=longitude)
+            db.session.add(event_details)
             db.session.commit()
+            
             flash('Event created successfully', 'success')
             return redirect(url_for('home'))
         else:
             flash('Failed to get your location. Please try again.', 'danger')
     return render_template('create_event.html')
+
 
 def create_sample_data():
     
@@ -417,7 +436,7 @@ def create_sample_data():
     password2 = 'password2'
     hashedPassword2 = bcrypt.generate_password_hash(password2).decode('utf-8')
 
-    user1 = User(username = 'user1', password = hashedPassword1, firstName = 'First1', lastName = 'Last1', dateJoined = currentDate, birthDate = currentDate, isOrganiser = False)
+    user1 = User(username = 'user1', password = hashedPassword1, firstName = 'First1', lastName = 'Last1', dateJoined = currentDate, birthDate = currentDate, isOrganiser = True)
     user2 = User(username = 'user2', password = hashedPassword2, firstName = 'First2', lastName = 'Last2', dateJoined = currentDate, birthDate = currentDate, isOrganiser = False)
 
     # Add sample users to the database
