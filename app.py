@@ -303,6 +303,7 @@ def register():
         lastname = request.form['lastname']
         birthdate = request.form['birthdate']
         isOrganiser = request.form.get('isOrganiser')
+        print(request.form)
 
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
@@ -328,16 +329,11 @@ def register():
         isOrg = request.form.get('isOrganiser') == 'on'
 
         # Create the new user
-        user = User(username=username, firstName = firstname, lastName = lastname, dateJoined = currentDate, birthDate = cleansedDate, isOrganiser = isOrg)
+        user = User(username=username, password = hashed_password, firstName = firstname, lastName = lastname, dateJoined = currentDate, birthDate = cleansedDate, isOrganiser = isOrg)
         db.session.add(user)
         db.session.commit()
 
         userId = user.userId
-
-        # Create a new user auth record
-        user_auth = User(userId = userId, password = hashed_password)
-        db.session.add(user_auth)
-        db.session.commit()
 
         # Create a new user contact record
         userContact = UserContact(userId = userId, contactType = 'email', contactValue = email, contactDescription = 'Primary email')
