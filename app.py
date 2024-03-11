@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from flask_socketio import SocketIO, emit
 from datetime import datetime, time, timedelta
 import requests
 import requests
@@ -10,6 +11,8 @@ app.config['SECRET_KEY'] = 'Password1'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+
+socketIo = SocketIO(app)
 
 currentUtcTime = datetime.utcnow()
 currentDate = currentUtcTime.date()
@@ -63,6 +66,16 @@ class User(db.Model):
     
     wallPosts = db.relationship('WallPost', backref = 'user', lazy = True)
  
+class UserPreferences(db.Model):
+    __table__ = 'userpreferences'
+
+    userPreferenceId = db.Column(db.Integer, primary_key=True)
+    userId = db.Column(db.Integer, db.ForeignKey('user.userId'), nullable=False)
+    preferencesFilePath = db.Column(db.String(255), unique=True, nullable=False)
+
+    def __repr__(self):
+        return '<UserPreferences userID = {self.userId}, jsonFilePath = {self.preferencesFilePath}>'.format(self.userId, self.jsonFilePath)
+
 class UserContact(db.Model):
     __tablename__ = 'usercontact'
     contactId = db.Column(db.Integer, primary_key=True)  
@@ -134,6 +147,52 @@ class Tags(db.Model):
     __tablename__ = 'tags'
     tagId = db.Column(db.Integer, primary_key=True)
     tag = db.Column(db.String(50), unique=True, nullable=False)
+
+class Ticket(db.Model):
+    __tablename__ = 'ticket'
+    ticketId = db.Column(db.Integer, primary_key=True)
+    eventId = db.Column(db.Integer, db.ForeignKey('event.eventId'), nullable=False)
+    userId = db.Column(db.Integer, db.ForeignKey('user.userId'), nullable=False)
+    ticketType = db.Column(db.String(50), nullable=False)
+    ticketPrice = db.Column(db.Float, nullable=False)
+    ticketcode =  db.Column(db.Char, unique=True, nullable=False)
+
+class Receipt(db.Model):
+    __tablename__ = 'receipt'
+    receiptId = db.Column(db.Integer, primary_key=True)
+    ticketId = db.Column(db.Integer, db.ForeignKey('ticket.ticketId'), nullable=False)
+    userId = db.Column(db.Integer, db.ForeignKey('user.userId'), nullable=False)
+    purchaseDate = db.Column(db.Date, nullable=False)
+    purchaseTime = db.Column(db.Time, nullable=False)
+    purchaseAmount = db.Column(db.Float, nullable=False)
+
+class Notification(db.Model):
+    __tablename__ = 'notification'
+    notificationId = db.Column(db.Integer, primary_key=True)
+    userId = db.Column(db.Integer, db.ForeignKey('user.userId'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timeStamp = db.Column(db.DateTime, nullable=False, default = datetime.utcnow)
+    read = db.Column(db.Boolean, nullable=False, default = False)
+
+class Conversation(db.Model):
+    __tablename__ = 'conversation'
+    conversationId = db.Column(db.Integer, primary_key=True)
+    participants = db.relationship('User', secondary='conversationParticipant', backref=db.backref('conversations'))
+
+class ConversationParticipant(db.Model):
+    __tablename__ = 'conversationParticipant'
+    conversationParticipantId = db.Column(db.Integer, primary_key=True)
+    conversationId = db.Column(db.Integer, db.ForeignKey('conversation.conversationId'), nullable=False)
+    userId = db.Column(db.Integer, db.ForeignKey('user.userId'), nullable = False)
+
+class Message(db.Model):
+    __tablename__ = 'message'
+    messageId = db.Column(db.Integer, primary_key=True)
+    conversationId = db.Column(db.Integer, db.ForeignKey('conversation.conversationId'), nullable=False)
+    senderId = db.Column(db.Integer, db.ForeignKey('user.userId'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timeStamp = db.Column(db.DateTime, nullable=False, default = datetime.utcnow)
+    read = db.Column(db.Boolean, nullable=False, default = False)    
 
 def openStreetMapGeocode(address):
     base_url = "https://nominatim.openstreetmap.org/search"
@@ -252,6 +311,27 @@ def reverseGeocode(latitude, longitude):
         return address
     else:
         return None
+    
+def create_notification(userId, content):
+    notification = Notification(userId = userId, content = content)
+    db.session.add(notification)
+    db.session.commit()
+    return notification
+
+def mark_notification_as_read(notificationId):
+    notification = Notification.query.get(notificationId)
+    if notification:
+        notification.isRead = True
+        db.session.commit()
+        return True
+    return False
+
+def get_user_notifications(userId, unreadOnly = False):
+    if unreadOnly:
+        notifications = Notification.query.filter_by(userId = userId, isRead = False).all()
+    else:
+        notifications = Notification.query.filter_by(userId = userId).all()
+    return notifications
 
 # Routes
 @app.route('/')
@@ -303,7 +383,6 @@ def register():
         lastname = request.form['lastname']
         birthdate = request.form['birthdate']
         isOrganiser = request.form.get('isOrganiser')
-        print(request.form)
 
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
@@ -411,6 +490,139 @@ def create_event():
             flash('Failed to get your location. Please try again.', 'danger')
     return render_template('create_event.html')
 
+# Create notification
+@app.route('/create_notification', methods=['POST'])
+def create_notification():
+    userId = request.json.get('userId')
+    content = request.json.get('content')
+
+    if userId and content:
+        notification = create_notification(userId, content)
+        return jsonify({'notificationId': notification.notificationId}), 201
+    else:
+        return jsonify({'error': 'Invalid data'}), 400
+    
+# Get notifications
+@app.route('/user_notifications/<int: userId>', methods=['GET'])
+def fetch_notifications(userId):
+    unreadOnly = request.args.get('unreadOnly', type = bool, default = False)
+    notifications = get_user_notifications(userId, unreadOnly = unreadOnly)
+    return jsonify([notification.serialize() for notification in notifications]), 200
+
+# Mark notification as read
+@app.route('/mark_notification_as_read/<int:notificationId', methods=['POST'])
+def mark_notification_as_read(notificationId):
+    success = mark_notification_as_read(notificationId)
+    if success:
+        return jsonify({'message': 'Notification marked as read'}), 200
+    else:
+        return jsonify({'error': 'Notification not found'}), 404
+
+# Starting a conversation
+@app.route('/start_conversation', methods=['POST'])
+def start_conversation():
+    currentUserId = session.get('userId')
+    if currentUserId:
+        participants = request.json.get('participants') # List of user IDs
+        conversation = Conversation()
+        db.session.add(conversation)
+        db.session.flush() # Ensure conversationId is available
+        for participantId in participants:
+            participant = User.query.get(participantId)
+            if participant:
+                conversationParticipant = conversationParticipant(userId = participantId, conversationId = conversation.conversationId)
+                db.session.add(conversationParticipant)
+        db.session.commit()
+        return jsonify({'conversationId': conversation.conversationId}), 201
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
+    
+# Sending a message
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    currentUserId = session.get('userId')
+    if currentUserId:
+        conversationId = request.json.get('conversationId')
+        content = request.json.get('content')
+        conversation = Conversation.query.get(conversationId)
+        if conversation and currentUserId in [participant.userId for participant in conversation.participants]:
+            message = Message(conversationId = conversationId, senderId = currentUserId, content = content)
+            db.session.add(message)
+            db.session.commit()
+
+            # Emit a new_message event to the recipient(s)
+            recipientIds = [participant.userId for participant in conversation.participants if participant.userId != currentUserId]
+            for recipientID in recipientIds:
+                socketIo.emit('new_message', {'conversation_id': conversationId, 'sender_id': currentUserId}, room = recipientID)
+
+            return jsonify({'messageId': message.messageId}), 201
+        else:
+            return jsonify({'error': 'Conversation not found'}), 404
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
+    
+# Getting messages
+@app.route('/get_messages/<int: conversationId>', methods=['GET'])
+def get_messages():
+    currentUserId = session.get('userId')
+    if currentUserId:
+        conversationId = request.args.get('conversationId')
+        conversation = Conversation.query.get(conversationId)
+        if conversation and currentUserId in [participant.userId for participant in conversation.participants]:
+            messages = Message.query.filter_by(conversationId = conversationId).all()
+            messageData = [{'senderId': message.senderId, 'content': message.content, 'timeStamp': message.timeStamp, 'read': message.read} for message in messages]
+            return jsonify([message.content for message in messages]), 200
+        else:
+            return jsonify({'error': 'Conversation not found'}), 404
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
+    
+# Marking a message as read
+@app.route('/mark_message_as_read/<int: messageId>', methods=['POST'])
+def mark_message_as_read():
+    currentUserId = session.get('userId')
+    if currentUserId:
+        messageID = request.json.get('messageId') # List of message IDs
+        messages = Message.query.filter(Message.messageId.in_(messageID)).all()
+        for message in messages:
+            message.read = True
+        db.session.commit()
+        return jsonify({'message': 'Messages marked as read'}), 200
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
+    
+# Editing a messasge
+@app.route('/edit_message', methods=['POST'])
+def edit_message():
+    currentUserId = session.get('userId')
+    if currentUserId:
+        messageId = request.json.get('messageId')
+        newContent = request.json.get('content')
+        message = Message.query.get(messageId)
+        if message and message.senderId == currentUserId: # Check if the user is the sender of the message
+            message.content = newContent
+            db.session.commit()
+            return jsonify({'message': 'Message edited successfully'}), 200
+        else:
+            return jsonify({'error': 'Message not found or user not authorized'}), 404
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
+    
+# Deleting a message
+@app.route('/delete_message', methods=['POST'])
+def delete_message():
+    currentUserId = session.get('userId')
+    if currentUserId:
+        messageId = request.json.get('messageId')
+        message = Message.query.get(messageId)
+        if message and message.senderId == currentUserId: # Check if the user is the sender of the message
+            db.session.delete(message)
+            db.session.commit()
+            return jsonify({'message': 'Message deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Message not found or user not authorized'}), 404
+    else:
+        return jsonify({'error': 'User not logged in'}), 401
 
 def create_sample_data():
     
