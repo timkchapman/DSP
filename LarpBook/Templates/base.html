@@ -3,58 +3,120 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %} {% endblock %} - FlaskApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {% endblock %} - LarpBook</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Custom CSS -->
     <style>
-        h2 {
-            width: 100%;
-        }
-
+        /* Center the title */
         .title {
-            margin: 5px;
-            width: 100%;
+            text-align: center;
         }
 
-        .content {
-            margin: 5px;
-            width: 100%;
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
+        /* Style for hamburger button */
+        #menu-toggle {
+            position: fixed;
+            top: 20px;
+            /* Adjust as needed */
+            right: 20px;
+            /* Adjust as needed */
+            z-index: 1000;
         }
 
-        .post {
-            flex: 20%;
-            padding: 10px;
-            margin: 5px;
-            background-color: #f3f3f3;
-            inline-size: 100%;
+        #menu-toggle span {
+            display: block;
+            width: 30px;
+            height: 3px;
+            background-color: #333;
+            margin-bottom: 5px;
         }
 
-        .title a {
-            color: #00a36f;
+        /* Hide the menu by default */
+        #menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #f8f9fa;
+            transform: translateX(250px);
+            transition: transform 0.3s ease-in-out;
+            z-index: 999;
+        }
+
+        #menu.active {
+            transform: translateX(0);
+        }
+
+        /* Style for menu links */
+        #menu a {
+            display: block;
+            padding: 20px;
+            color: #333;
             text-decoration: none;
         }
 
-        nav a {
-            color: #d64161;
-            font-size: 3em;
-            margin-left: 50px;
-            text-decoration: none;
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 10px 0;
         }
     </style>
 </head>
 
 <body>
-    <nav>
-        <a href="{{ url_for('main.index') }}">LARPBOOK</a>
-        <a href="#">Login/Register</a>
-        <a href="{{url_for('events.index') }}">Events</a>
-        <a href="#">FAQ</a>
-    </nav>
-    <hr>
+    <!-- Title -->
+    <h1 class="title">LarpBook</h1>
+
+    <!-- Hamburger Button -->
+    <div id="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <!-- Menu -->
+    <div id="menu">
+        <a href="{{ url_for('main.index') }}">Home</a>
+        {% if logged_in %}
+        <a href="{{ url_for('user.index') }}">Profile</a>
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
+        {% else %}
+        <a href="{{ url_for('auth.index') }}">Login/Register</a>
+        {% endif %}
+        <a href="{{ url_for('events.index') }}">Events</a>
+        <a href="{{ url_for('questions.index') }}">FAQ</a>
+    </div>
+
+    <!-- Content Block -->
     <div class="content">
         {% block content %} {% endblock %}
     </div>
+
+    <!-- Footer Block -->
+    <footer class="footer">
+        <div class="container">
+            <span class="text-muted">© 2024 LarpBook. All rights reserved</span>
+        </div>
+    </footer>
+
+
+    <!-- Bootstrap JS (Optional, for toggling menu) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Toggle menu when hamburger button is clicked
+            $('#menu-toggle').click(function () {
+                $('#menu').toggleClass('active');
+            });
+        });
+    </script>
 </body>
 
 </html>

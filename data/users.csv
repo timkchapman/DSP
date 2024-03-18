@@ -1,0 +1,4 @@
+username,password,first_name,last_name,date_joined,birth_date,is_organiser,is_active
+User1,password1,John,Doe,2019-01-01,1990-01-01,True,True
+User2,password2,Jane,Doe,2019-01-01,1990-01-01,False,True
+
