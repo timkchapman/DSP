@@ -4,6 +4,7 @@ from .event import Event
 class EventDetails(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    cover_image_id = db.Column(db.Integer, db.ForeignKey('image.id'), nullable=True)
     description = db.Column(db.Text, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)

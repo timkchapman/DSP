@@ -5,6 +5,13 @@
     <h1>{% block title %} Event {% endblock %}</h1>
 </span>
 <div class="content">
+    {% if image %}
+    <img src="{{ url_for('static', filename=image.location) }}" class="d-block w-100" alt="{{ event.name }}"
+        style="width: 600px; height: 400px;">
+    {% else %}
+    <!-- Handle case where no cover image is available -->
+    <p>No cover image available</p>
+    {% endif %}
     <h2>This is the Event page within the events blueprint</h2>
 </div>
 {% endblock %}

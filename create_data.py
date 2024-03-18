@@ -2,6 +2,7 @@ from LarpBook import db, create_app
 from LarpBook.Models import models
 from LarpBook.extensions import bcrypt
 from datetime import datetime
+import os
 
 def main():
     app = create_app()
@@ -55,9 +56,26 @@ def main():
                         db.session.add(event)
                         db.session.commit()
 
+                        # Create Default Album for the event
+                        default_album = models.Album(name='Default', description = 'Default album for event')
+                        event.albums.append(default_album)
+                        db.session.add(default_album)
+                        db.session.commit()
+
+                        # Create Banner Image for the event
+                        image_path = 'LarpBook/Static/Images/All_The_News.jpg'
+                        if os.path.exists(image_path):
+                            print({image_path})
+                            banner_image = models.Image(name='Default', location='Images/All_The_News.jpg', image_type='banner_image', album_id=default_album.id)
+                            db.session.add(banner_image)
+                            db.session.commit()
+                        else:
+                            print(f'Image {image_path} does not exist')
+
                         # Define EventDetails data for the event
                         event_details = {
                             'event_id': event.id,
+                            'cover_image_id': banner_image.id,
                             'description': f'Description for Event {j + 1}',
                             'date': datetime.strptime(f'2024-{j + 1}-{j + 1}', '%Y-%m-%d').date(),
                             'time': datetime.strptime(f'{j + 1}:00:00', '%H:%M:%S').time(),
@@ -78,8 +96,25 @@ def main():
                         db.session.add(event)
                         db.session.commit()
 
+                        # Create Default Album for the event
+                        default_album = models.Album(name='Default', description = 'Default album for event')
+                        event.albums.append(default_album)
+                        db.session.add(default_album)
+                        db.session.commit()
+
+                        # Create Banner Image for the event
+                        image_path = 'LarpBook/Static/Images/All_The_News.jpg'
+                        if os.path.exists(image_path):
+                            print({image_path})
+                            banner_image = models.Image(name='Default', location='Images/All_The_News.jpg', image_type='banner_image', album_id=default_album.id)
+                            db.session.add(banner_image)
+                            db.session.commit()
+                        else:
+                            print(f'Image {image_path} does not exist')
+
                         event_details = {
                             'event_id': event.id,
+                            'cover_image_id': banner_image.id,
                             'description': f'Description for Event {j + 1}',
                             'date': datetime.strptime(f'2024-{(j + 1)-10}-{j + 1}', '%Y-%m-%d').date(),
                             'time': datetime.strptime(f'{(j + 1)-10}:00:00', '%H:%M:%S').time(),
@@ -92,6 +127,13 @@ def main():
 
                         event_wall = models.EventWall(event=event.id)
                         db.session.add(event_wall)
+
+            users = models.User.query.all()
+            for user in users:
+                # create a default album for each user
+                default_album = models.Album(name='Default', description = 'Default album for user')
+                user.albums.append(default_album)
+                db.session.add(default_album)
 
             # Commit the changes
             db.session.commit()

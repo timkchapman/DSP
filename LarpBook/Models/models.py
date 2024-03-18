@@ -14,3 +14,5 @@ from .Events.eventdetails import EventDetails
 from .Events.eventwall import EventWall
 from .Events.receipt import Receipt
 from .Events.ticket import Ticket
+from .Images.image import Image
+from .Images.album import Album

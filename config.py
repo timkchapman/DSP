@@ -9,3 +9,5 @@ class Config:
 		or 'sqlite:///' + os.path.join(basedir, 'LarpBook.db')
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 	GEOCODER_API_KEY = 'AIzaSyAknTozLR6kcm24rkpgc8kdykbUv8hSTeU'
+	STATIC_FOLDER = 'Static'
+	STATIC_URL_PATH = 'LarpBook/static'
