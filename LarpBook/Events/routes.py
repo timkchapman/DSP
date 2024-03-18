@@ -11,3 +11,8 @@ def index():
 @bp.route('/categories/')
 def categories():
     return render_template('events/categories.html')
+
+@bp.route('/event/<int:event_id>/')
+def event_page(event_id):
+    event = Event.query.get_or_404(event_id)
+    return render_template('events/event.html', event=event)

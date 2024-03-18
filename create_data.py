@@ -53,10 +53,45 @@ def main():
                     for j in range(10):
                         event = models.Event(organiser_id=user.id, name=f'Event {j + 1}')
                         db.session.add(event)
+                        db.session.commit()
+
+                        # Define EventDetails data for the event
+                        event_details = {
+                            'event_id': event.id,
+                            'description': f'Description for Event {j + 1}',
+                            'date': datetime.strptime(f'2024-{j + 1}-{j + 1}', '%Y-%m-%d').date(),
+                            'time': datetime.strptime(f'{j + 1}:00:00', '%H:%M:%S').time(),
+                            'latitude': 0.0,
+                            'longitude': 0.0
+                        }
+
+                        # Create EventDetails instance for the event
+                        event_details = models.EventDetails(**event_details)
+                        db.session.add(event_details)
+
+                        # Create EventWall instance for the event
+                        event_wall = models.EventWall(event=event.id)
+                        db.session.add(event_wall)
                 elif i == 1:
                     for j in range(10,20):
                         event = models.Event(organiser_id=user.id, name=f'Event {j + 1}')
                         db.session.add(event)
+                        db.session.commit()
+
+                        event_details = {
+                            'event_id': event.id,
+                            'description': f'Description for Event {j + 1}',
+                            'date': datetime.strptime(f'2024-{(j + 1)-10}-{j + 1}', '%Y-%m-%d').date(),
+                            'time': datetime.strptime(f'{(j + 1)-10}:00:00', '%H:%M:%S').time(),
+                            'latitude': 0.0,
+                            'longitude': 0.0
+                        }
+
+                        event_details = models.EventDetails(**event_details)
+                        db.session.add(event_details)
+
+                        event_wall = models.EventWall(event=event.id)
+                        db.session.add(event_wall)
 
             # Commit the changes
             db.session.commit()

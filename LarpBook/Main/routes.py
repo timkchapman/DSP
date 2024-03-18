@@ -8,10 +8,12 @@ from LarpBook.Models.Users.user import User
 @bp.route('/')
 def index():
     latest_events = Event.query.order_by(Event.id.desc()).limit(5).all()
+    for event in latest_events:
+        print(event.name)
     latest_event_details = EventDetails.query.order_by(EventDetails.id.desc()).limit(5).all()
 
     soonest_events = Event.query.join(EventDetails).order_by(EventDetails.date.asc()).limit(5).all()
-    soonest_event_details = [event.event_details for event in soonest_events]
+    soonest_event_details = EventDetails.query.order_by(EventDetails.date.asc()).limit(5).all()
 
     organiser_ids = [event.organiser_id for event in latest_events + soonest_events]
     organisers = User.query.filter(User.id.in_(organiser_ids)).all()

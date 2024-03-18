@@ -18,6 +18,22 @@
         text-decoration: none;
         opacity: 0.5;
     }
+
+    /* CSS to position carousel controls */
+    .carousel-controls {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+    }
+
+    .carousel-controls .carousel-control-prev {
+        left: 0;
+    }
+
+    .carousel-controls .carousel-control-next {
+        right: 0;
+    }
 </style>
 
 <span class="title">
@@ -63,16 +79,16 @@
                 </div>
             </div>
         </div>
+        <!-- Left and right controls -->
+        <div class="carousel-controls">
+            <a class="carousel-control-prev" href="#eventCarousel" role="button" data-slide="prev">
+                &lt;
+            </a>
+            <a class="carousel-control-next" href="#eventCarousel" role="button" data-slide="next">
+                &gt;
+            </a>
+        </div>
     </div>
-</div>
-
-<!-- Left and right controls -->
-<a class="carousel-control-prev" href="#eventCarousel" role="button" data-slide="prev">
-    &lt;
-</a>
-<a class="carousel-control-next" href="#eventCarousel" role="button" data-slide="next">
-    &gt;
-</a>
 </div>
 
 <div class="content">
@@ -90,10 +106,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for event, organiser_name, eventdetails in combined_data_soonest %}
+                    {% for (event, organiser_name), eventdetails in combined_data_soonest %}
                     <tr>
-                        <td>{{ organiser_name }}</td>
-                        <td>{{ event.title }}</td>
+                        <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
+                                organiser_name }}</a></td>
+                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></td>
                         <td>{{ eventdetails.description }}</td>
                         <td>{{ eventdetails.location }}</td>
                         <td>{{ eventdetails.date }}</td>
@@ -115,10 +132,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for event, organiser_name, eventdetails in combined_data_latest %}
+                    {% for (event, organiser_name), eventdetails in combined_data_latest %}
                     <tr>
-                        <td>{{ organiser_name }}</td>
-                        <td>{{ event.title }}</td>
+                        <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
+                                organiser_name }}</a></td>
+                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></td>
                         <td>{{ eventdetails.description }}</td>
                         <td>{{ eventdetails.location }}</td>
                         <td>{{ eventdetails.date }}</td>
