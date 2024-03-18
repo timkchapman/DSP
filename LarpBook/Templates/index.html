@@ -90,7 +90,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for event, organiser_name, eventdetails in combined_data %}
+                    {% for event, organiser_name, eventdetails in combined_data_soonest %}
                     <tr>
                         <td>{{ organiser_name }}</td>
                         <td>{{ event.title }}</td>
@@ -115,7 +115,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for event, organiser_name, eventdetails in combined_data %}
+                    {% for event, organiser_name, eventdetails in combined_data_latest %}
                     <tr>
                         <td>{{ organiser_name }}</td>
                         <td>{{ event.title }}</td>
