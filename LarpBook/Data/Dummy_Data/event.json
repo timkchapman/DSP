@@ -1,0 +1,46 @@
+[
+    {
+        "id": "1",
+        "organiser_id": "2",
+        "name": "2024 Winter Solstice",
+        "cover_image_id": "1",
+        "description": "The first event of 2024",
+        "start_date": "2024-04-26",
+        "end_date": "2024-04-28",
+        "latitude": "52.05802",
+        "longitude": "-1.03058"
+    },
+    {
+        "id": "2",
+        "organiser_id": "2",
+        "name": "2024 Spring Equinox",
+        "cover_image_id": "1",
+        "description": "The second event of 2024",
+        "start_date": "2024-06-14",
+        "end_date": "2024-06-16",
+        "latitude": "52.05802",
+        "longitude": "-1.03058"
+    },
+    {
+        "id": "3",
+        "organiser_id": "2",
+        "name": "2024 Summer Solstice",
+        "cover_image_id": "1",
+        "description": "The third event of 2024",
+        "start_date": "2024-07-26",
+        "end_date": "2024-07-28",
+        "latitude": "52.05802",
+        "longitude": "-1.03058"
+    },
+    {
+        "id": "4",
+        "organiser_id": "2",
+        "name": "2024 Autumn Equinox",
+        "cover_image_id": "1",
+        "description": "The fourth event of 2024",
+        "start_date": "2024-09-13",
+        "end_date": "2024-09-15",
+        "latitude": "52.05802",
+        "longitude": "-1.03058"
+    }
+]

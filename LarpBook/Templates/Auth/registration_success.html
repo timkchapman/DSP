@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="alert alert-success" role="alert">
+    Registration successful! You can now <a href="{{ url_for('auth.login') }}">log in</a>.
+    Or you can go back to the <a href="{{ url_for('main.index') }}">home page</a>.
+</div>
+{% endblock %}

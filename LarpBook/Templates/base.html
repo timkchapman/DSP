@@ -10,8 +10,17 @@
     <!-- Custom CSS -->
     <style>
         /* Center the title */
-        .title {
+        .global-title {
             text-align: center;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            width: 100%;
+            transform: translateX(-50%);
+            z-index: 10001;
+            background-color: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 5px;
         }
 
         /* Style for hamburger button */
@@ -21,7 +30,7 @@
             /* Adjust as needed */
             right: 20px;
             /* Adjust as needed */
-            z-index: 1000;
+            z-index: 10002;
         }
 
         #menu-toggle span {
@@ -42,7 +51,7 @@
             background-color: #f8f9fa;
             transform: translateX(250px);
             transition: transform 0.3s ease-in-out;
-            z-index: 999;
+            z-index: 10001;
         }
 
         #menu.active {
@@ -57,10 +66,18 @@
             text-decoration: none;
         }
 
+        .content {
+            width: 100vw;
+            height: calc(100%-50px);
+            margin-top: 50px;
+            padding: 20px;
+
+        }
+
         .footer {
             position: fixed;
             bottom: 0;
-            width: 100%;
+            width: 100vw;
             background-color: #f8f9fa;
             text-align: center;
             padding: 10px 0;
@@ -70,7 +87,7 @@
 
 <body>
     <!-- Title -->
-    <h1 class="title">LarpBook</h1>
+    <h1 class="global-title">LarpBook</h1>
 
     <!-- Hamburger Button -->
     <div id="menu-toggle">

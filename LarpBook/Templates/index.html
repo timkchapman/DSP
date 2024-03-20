@@ -2,83 +2,148 @@
 
 {% block content %}
 <style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    .title-container {
+        position: relative;
+        width: 100%;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+    }
+
+    .carousel-container {
+        position: relative;
+        width: 600px;
+        margin: 0 auto;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+    }
+
+    .table-container {
+        position: relative;
+        width: 100%;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* CSS for the translucent overlay on carousel */
+    .carousel-item::before,
+    .carousel-item::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 7.5%;
+        background-color: rgba(200, 200, 200, 0.7);
+        z-index: 1;
+    }
+
+    .carousel-item::before {
+        left: 0;
+    }
+
+    .carousel-item::after {
+        right: 0;
+    }
+
     /* CSS to show the carousel controls */
-    .carousel-control-prev,
-    .carousel-control-next {
-        font-size: 24px;
-        color: black;
-        text-decoration: none;
-        opacity: 1;
-    }
-
-    /* CSS to alter the carousel controls on hover */
-    .carousel-control-prev:hover,
-    .carousel-control-next:hover {
-        color: black;
-        text-decoration: none;
-        opacity: 0.5;
-    }
-
-    /* CSS to position carousel controls */
     .carousel-controls {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
         width: 100%;
+        z-index: 1;
+        /* Ensure the controls appear above the image and grey boxes */
+    }
+
+    .carousel-controls .carousel-control-prev,
+    .carousel-controls .carousel-control-next {
+        font-size: 24px;
+        color: black;
+        text-decoration: none;
+        opacity: 1;
+        background-color: transparent;
+        border: none;
+        padding: 10px;
+        z-index: 1;
+        /* Ensure the controls appear above the grey boxes */
+        position: absolute;
     }
 
     .carousel-controls .carousel-control-prev {
-        left: 0;
+        left: calc(50% - 325px);
+        /* Adjust as needed */
     }
 
     .carousel-controls .carousel-control-next {
-        right: 0;
+        right: calc(50% - 325px);
+        /* Adjust as needed */
+    }
+
+    .carousel-controls .carousel-control-prev:hover,
+    .carousel-controls .carousel-control-next:hover {
+        color: black;
+        text-decoration: none;
+        opacity: 0.5;
+    }
+
+    .carousel-caption-container {
+        position: absolute;
+        bottom: -50px;
+        left: calc(50% - 255px);
+        right: calc(50% - 255px);
+        background-color: rgba(200, 200, 200, 0.7);
+        padding: 65px;
+    }
+
+    .carousel-caption {
+        color: black;
+        text-align: center;
     }
 </style>
+<div class="title-container">
+    <span class="title">
+        <h1>{% block title %} The Home of LARP in the UK {% endblock %}</h1>
+    </span>
+</div>
 
-<span class="title">
-    <h1>{% block title %} The Home of LARP in the UK {% endblock %}</h1>
-</span>
-
-<div class="container">
+<div class="carousel-container">
     <div id="eventCarousel" class="carousel slide mx-auto" data-ride="carousel" data-interval="10000">
         <!-- Indicators -->
         <ol class="carousel-indicators">
-            <li data-target="#eventCarousel" data-slide-to="0" class="active"></li>
-            <li data-target="#eventCarousel" data-slide-to="1"></li>
-            <li data-target="#eventCarousel" data-slide-to="2"></li>
+            {% for index, event in events %}
+            <li data-target="#eventCarousel" data-slide-to="{{ index }}" {% if index==0 %}class="active" {% endif %}>
+            </li>
+            {% endfor %}
         </ol>
 
         <!-- Wrapper for slides -->
         <div class="carousel-inner">
-            <!-- First Event -->
-            <div class="carousel-item active">
-                <img src="{{ url_for('static', filename='images/citizens_notice.jpg') }}" class="d-block w-100"
-                    alt="a citizen placing a notice" style="width: 600px; height: 400px;">
-                <div class="carousel-caption">
-                    <h3>First Event</h3>
-                    <p>Some text about the first event</p>
+            {% for index, event in events %}
+            <a href="{{ url_for('events.event_page', event_id=event.id) }}"
+                class="carousel-item {% if index == 0 %}active{% endif %}">
+                <div class="left-box"></div>
+                <img src="{{ url_for('static', filename=event['imageUrl']) }}" class="d-block w-100"
+                    alt="{{ event['name'] }}" style="width: 600px; height: 400px;">
+                <div class="right-box"></div>
+                <div class="carousel-caption-container">
+                    <div class="carousel-caption">
+                        <h3>{{ event['name'] }}</h3>
+                        <p>{{ event['description'] }}</p>
+                    </div>
                 </div>
-            </div>
-            <!-- Second Event -->
-            <div class="carousel-item">
-                <img src="{{ url_for('static', filename='images/All_The_News.jpg') }}" class="d-block w-100"
-                    alt="a citizen perusing the news" style="width: 600px; height: 400px;">
-                <div class="carousel-caption">
-                    <h3>Second Event</h3>
-                    <p>Some text about the second event</p>
-                </div>
-            </div>
-            <!-- Third Event -->
-            <div class="carousel-item">
-                <img src="{{ url_for('static', filename='images/Words_have_Weight.jpg') }}" class="d-block w-100"
-                    alt="a citizen holding a banner" style="width: 600px; height: 400px;">
-                <div class="carousel-caption">
-                    <h3>Third Event</h3>
-                    <p>Some text about the third event</p>
-                </div>
-            </div>
+            </a>
+            {% endfor %}
         </div>
+
+
+
         <!-- Left and right controls -->
         <div class="carousel-controls">
             <a class="carousel-control-prev" href="#eventCarousel" role="button" data-slide="prev">
@@ -91,62 +156,73 @@
     </div>
 </div>
 
-<div class="content">
-    <div class="row">
-        <div class="col-md-6">
-            <h2 class="mx-auto">Soonest Events</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Organiser</th>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Location</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for (event, organiser_name), eventdetails in combined_data_soonest %}
-                    <tr>
-                        <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
-                                organiser_name }}</a></td>
-                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></td>
-                        <td>{{ eventdetails.description }}</td>
-                        <td>{{ eventdetails.location }}</td>
-                        <td>{{ eventdetails.date }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="col-md-6">
-            <h2 class="mx-auto">Newest Events</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Organiser</th>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Location</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for (event, organiser_name), eventdetails in combined_data_latest %}
-                    <tr>
-                        <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
-                                organiser_name }}</a></td>
-                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></td>
-                        <td>{{ eventdetails.description }}</td>
-                        <td>{{ eventdetails.location }}</td>
-                        <td>{{ eventdetails.date }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="table-container">
+    <div class="content">
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <h2 class="mx-auto">Soonest Events</h2>
+                <table class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Organiser</th>
+                                <th>Title</th>
+                                <th>Location</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event_tuple in combined_data_soonest %}
+                            {% set event = event_tuple[0] %}
+                            {% set name = event_tuple[1] %}
+                            {% set address = event_tuple[2] %} <tr>
+                                <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
+                                        name }}</a></td>
+                                <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a>
+                                </td>
+                                <td>{{ address }}</td>
+                                <td>{{ event.start_date}} to {{ event.end_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </table>
+            </div>
+
+
+            <div class="col-12 col-md-6">
+                <h2 class="mx-auto">Newest Events</h2>
+                <table class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Organiser</th>
+                                <th>Title</th>
+                                <th>Location</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event_tuple in combined_data_latest %}
+                            <tr>
+                                {% set event = event_tuple[0] %}
+                                {% set name = event_tuple[1] %}
+                                {% set address = event_tuple[2] %}
+                                <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
+                                        name }}</a></td>
+                                <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a>
+                                </td>
+                                <td>{{ address }}</td>
+                                <td>{{ event.start_date}} to {{ event.end_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<!--<script src="{{ url_for('static', filename='javascript/carousel.js')}}"></script>-->
+
 {% endblock %}
