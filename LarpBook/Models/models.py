@@ -15,7 +15,6 @@ from .Messaging.message import Message
 from .Messaging.conversation import Conversation
 from .Messaging.participants import ConversationParticipant
 from .Events.event import Event
-from .Events.eventdetails import EventDetails
 from .Events.eventwall import EventWall
 from .Images.image import Image
 from .Images.album import Album

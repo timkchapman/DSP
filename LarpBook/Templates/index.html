@@ -172,14 +172,16 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for (event, organiser_name), eventdetails in combined_data_soonest %}
-                            <tr>
+                            {% for event_tuple in combined_data_soonest %}
+                            {% set event = event_tuple[0] %}
+                            {% set name = event_tuple[1] %}
+                            {% set address = event_tuple[2] %} <tr>
                                 <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
-                                        organiser_name }}</a></td>
+                                        name }}</a></td>
                                 <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a>
                                 </td>
-                                <td>{{ eventdetails.location }}</td>
-                                <td>{{ eventdetails.start_date }} to {{eventdetails.end_date }}</td>
+                                <td>{{ address }}</td>
+                                <td>{{ event.start_date}} to {{ event.end_date }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -201,14 +203,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for (event, organiser_name), eventdetails in combined_data_latest %}
+                            {% for event_tuple in combined_data_latest %}
                             <tr>
+                                {% set event = event_tuple[0] %}
+                                {% set name = event_tuple[1] %}
+                                {% set address = event_tuple[2] %}
                                 <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
-                                        organiser_name }}</a></td>
+                                        name }}</a></td>
                                 <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a>
                                 </td>
-                                <td>{{ eventdetails.location }}</td>
-                                <td>{{ eventdetails.start_date }} to {{ eventdetails.end_date }}</td>
+                                <td>{{ address }}</td>
+                                <td>{{ event.start_date}} to {{ event.end_date }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

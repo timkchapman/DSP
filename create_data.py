@@ -5,7 +5,7 @@ from LarpBook import db, create_app
 from datetime import datetime
 from LarpBook.extensions import bcrypt
 
-model_order = ['User', 'UserContact', 'Event', 'Album', 'Image', 'EventDetails']
+model_order = ['User', 'UserContact', 'Event', 'Album', 'Image']
 
 app = create_app()
 
@@ -15,7 +15,7 @@ def read_json_file(file_path):
     return data
 
 def import_data(model_name):
-    file_path = os.path.join('LarpBook', 'Data', 'Dummy Data', f'{model_name}.json')
+    file_path = os.path.join('LarpBook', 'Data', 'Dummy_Data', f'{model_name}.json')
     data = read_json_file(file_path)
 
     for item in data:
