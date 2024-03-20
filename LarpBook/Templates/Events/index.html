@@ -1,36 +1,75 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<span class="title">
-    <h1>{% block title %} The Events Page {% endblock %}</h1>
-</span>
-<div class="content">
-    <h2>This is the events Flask blueprint</h2>
-    <table>
+<style>
+    .container {
+        overflow-y: auto;
+        max-height: 80vh;
+        width: 1000px;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    .event-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .event-table th,
+    .event-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
+
+<div class="container">
+    <h1>Upcoming Events</h1>
+    <table class="event-table">
         <thead>
             <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
+                <th>Start Date</th>
+                <th>Event Details</th>
             </tr>
         </thead>
         <tbody>
-            {% for event in events %}
-            <tr class="event">
-                <td class="title">
-                    <a href="#">{{ event.title }}</a>
+            {% if events %}
+            {% for event, event_details, organiser_name, formatted_start_date in events %}
+            <tr>
+                <td>{{ formatted_start_date }}</td>
+                <td>
+                    {{ formatted_start_date }} to {{ event_details[0].end_date }} <br>
+                    <strong><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name
+                            }}</a></strong><br>
+                    <a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
+                        organiser_name }}</a> <br>
+                    {{ event_details[0].description }}
                 </td>
-                <td class="description">{{ event.description }}</td>
-                <td>{{ event.date }}</td>
-                <td>{{ event.time }}</td>
-                <td>{{ event.latitude }}</td>
-                <td>{{ event.longitude }}</td>
             </tr>
             {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="2">No upcoming events.</td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
+    <div class="pagination-container">
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('events.index', page=pagination.page - 1) }}">Previous</a>
+            {% endif %}
+            <span>Page {{ pagination.page }} of {{ pagination.pages[-1] }}</span>
+            {% if pagination.has_next %}
+            <a href="{{ url_for('events.index', page=pagination.page + 1) }}">Next</a>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}

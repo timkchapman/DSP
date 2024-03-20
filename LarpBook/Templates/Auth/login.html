@@ -5,13 +5,27 @@
     <h1>{% block title %} Login {% endblock %}</h1>
 </span>
 <div class="content">
-    <h2>This is the login page within the auth blueprint</h2>
     <form method="POST" action="{{ url_for('auth.login') }}">
-        <label for="username">Username</label>
-        <input type="text" name="username" id="username" required>
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password" required>
-        <button type="submit">Login</button>
+        {{ form.csrf_token }}
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(class="form-control", id = "username") }}
+            {% for error in form.username.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control", id = "password") }}
+            {% for error in form.password.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="form-group form-check">
+            {{ form.remember(class="form-check-input", id = "remember") }}
+            {{ form.remember.label(class="form-check-label", for = "remember") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
     </form>
 </div>
 {% endblock %}

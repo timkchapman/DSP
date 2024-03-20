@@ -1,159 +1,42 @@
-from LarpBook import db, create_app
-from LarpBook.Models import models
-from LarpBook.extensions import bcrypt
-from datetime import datetime
 import os
+import json
+from LarpBook.Models import models
+from LarpBook import db, create_app
+from datetime import datetime
+from LarpBook.extensions import bcrypt
 
-def main():
-    app = create_app()
-    with app.app_context():
-        try:
-            # Generate hashed passwords
-            passwords = ['Password1', 'Password2', 'Password3', 'Password4', 'Password5']
-            hashed_passwords = [bcrypt.generate_password_hash(password).decode('utf-8') for password in passwords]
+model_order = ['User', 'UserContact', 'Event', 'Album', 'Image', 'EventDetails']
 
-            # Define user data
-            user_data = [
-                {'username': 'user1', 'first_name': 'User', 'last_name': 'One', 'is_organiser': True, 'is_active': True},
-                {'username': 'user2', 'first_name': 'User', 'last_name': 'Two', 'is_organiser': True, 'is_active': True},
-                {'username': 'user3', 'first_name': 'User', 'last_name': 'Three', 'is_organiser': False, 'is_active': True},
-                {'username': 'user4', 'first_name': 'User', 'last_name': 'Four', 'is_organiser': False, 'is_active': True},
-                {'username': 'user5', 'first_name': 'User', 'last_name': 'Five', 'is_organiser': False, 'is_active': True}
-            ]
+app = create_app()
 
-            # Add hashed passwords and dates to user data
-            for i, user_info in enumerate(user_data):
-                user_info['password_hash'] = hashed_passwords[i]
-                user_info['date_joined'] = datetime.strptime('2024-01-01', '%Y-%m-%d').date()
-                user_info['birth_date'] = datetime.strptime(f'199{i + 1}-0{i + 1}-0{i + 1}', '%Y-%m-%d').date()
+def read_json_file(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
 
-                # Create user instance
-                user = models.User(**user_info)
+def import_data(model_name):
+    file_path = os.path.join('LarpBook', 'Data', 'Dummy Data', f'{model_name}.json')
+    data = read_json_file(file_path)
 
-                # Add user to the session
-                db.session.add(user)
+    for item in data:
+        if 'date_joined' in item:
+            item['date_joined'] = datetime.strptime(item['date_joined'], '%Y-%m-%d').date()
+        if 'birth_date' in item:
+            item['birth_date'] = datetime.strptime(item['birth_date'], '%Y-%m-%d').date()
+        if 'start_date' in item:
+            item['start_date'] = datetime.strptime(item['start_date'], '%Y-%m-%d').date()
+        if 'end_date' in item:
+            item['end_date'] = datetime.strptime(item['end_date'], '%Y-%m-%d').date()
+        if 'password' in item:
+            item['password'] = bcrypt.generate_password_hash(item['password']).decode('utf-8')
 
-                # Commit the user addition to get auto-generated user id
-                db.session.commit()
+        model_instance = getattr(models, model_name)(**item)
+        db.session.add(model_instance)
+    db.session.commit()
 
-                # Create UserWall instance for the user
-                user_wall = models.UserWall(user=user.id)
-                db.session.add(user_wall)
-
-                # Create UserContact instances for the user
-                email_contact = models.UserContact(
-                    user=user.id,
-                    contact_type='Email',
-                    contact_value=f'email{i + 1}@email.com',
-                    description=f"user {i + 1}'s email address"
-                )
-                db.session.add(email_contact)
-
-                # Create 10 events for User1 and 2 each
-                if i == 0:
-                    for j in range(10):
-                        event = models.Event(organiser_id=user.id, name=f'Event {j + 1}')
-                        db.session.add(event)
-                        db.session.commit()
-
-                        # Create Default Album for the event
-                        default_album = models.Album(name='Default', description = 'Default album for event')
-                        event.albums.append(default_album)
-                        db.session.add(default_album)
-                        db.session.commit()
-
-                        # Create Banner Image for the event
-                        image_path = 'LarpBook/Static/Images/All_The_News.jpg'
-                        if os.path.exists(image_path):
-                            print({image_path})
-                            banner_image = models.Image(name='Default', location='Images/All_The_News.jpg', image_type='banner_image', album_id=default_album.id)
-                            db.session.add(banner_image)
-                            db.session.commit()
-                        else:
-                            print(f'Image {image_path} does not exist')
-
-                        # Define EventDetails data for the event
-                        event_details = {
-                            'event_id': event.id,
-                            'cover_image_id': banner_image.id,
-                            'description': f'Description for Event {j + 1}',
-                            'date': datetime.strptime(f'2024-{j + 1}-{j + 1}', '%Y-%m-%d').date(),
-                            'time': datetime.strptime(f'{j + 1}:00:00', '%H:%M:%S').time(),
-                            'latitude': 0.0,
-                            'longitude': 0.0
-                        }
-
-                        # Create EventDetails instance for the event
-                        event_details = models.EventDetails(**event_details)
-                        db.session.add(event_details)
-
-                        # Create EventWall instance for the event
-                        event_wall = models.EventWall(event=event.id)
-                        db.session.add(event_wall)
-                elif i == 1:
-                    for j in range(10,20):
-                        event = models.Event(organiser_id=user.id, name=f'Event {j + 1}')
-                        db.session.add(event)
-                        db.session.commit()
-
-                        # Create Default Album for the event
-                        default_album = models.Album(name='Default', description = 'Default album for event')
-                        event.albums.append(default_album)
-                        db.session.add(default_album)
-                        db.session.commit()
-
-                        # Create Banner Image for the event
-                        image_path = 'LarpBook/Static/Images/All_The_News.jpg'
-                        if os.path.exists(image_path):
-                            print({image_path})
-                            banner_image = models.Image(name='Default', location='Images/All_The_News.jpg', image_type='banner_image', album_id=default_album.id)
-                            db.session.add(banner_image)
-                            db.session.commit()
-                        else:
-                            print(f'Image {image_path} does not exist')
-
-                        event_details = {
-                            'event_id': event.id,
-                            'cover_image_id': banner_image.id,
-                            'description': f'Description for Event {j + 1}',
-                            'date': datetime.strptime(f'2024-{(j + 1)-10}-{j + 1}', '%Y-%m-%d').date(),
-                            'time': datetime.strptime(f'{(j + 1)-10}:00:00', '%H:%M:%S').time(),
-                            'latitude': 0.0,
-                            'longitude': 0.0
-                        }
-
-                        event_details = models.EventDetails(**event_details)
-                        db.session.add(event_details)
-
-                        event_wall = models.EventWall(event=event.id)
-                        db.session.add(event_wall)
-
-            users = models.User.query.all()
-            for user in users:
-                # create a default album for each user
-                default_album = models.Album(name='Default', description = 'Default album for user')
-                user.albums.append(default_album)
-                db.session.add(default_album)
-
-            # Commit the changes
-            db.session.commit()
-            print('Data added to database.')
-
-        except Exception as e:
-            print(f'An error occurred while adding users: {e}')
-            db.session.rollback()
-
-        '''try:
-            # Creating event data
-            user1 = models.User.query.filter_by(username='user1').first()
-            if user1:
-                event = models.Event(organiser_id=user1.id, name='Event 1')
-                db.session.add(event)
-
-        except Exception as e:
-            print(f'An error occurred while adding events: {e}')
-            db.session.rollback()'''
-        
-
-if __name__ == '__main__':
-    main()
+with app.app_context():
+    for model_name in model_order:
+        print(f'Importing {model_name} data')
+        import_data(model_name)
+        print(f'{model_name} data import complete')
+    print('Data import complete')

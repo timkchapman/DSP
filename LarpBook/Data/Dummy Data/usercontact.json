@@ -1,0 +1,32 @@
+[
+    {
+        "user": 1,
+        "contact_type": "Email",
+        "contact_value": "admin@larpbook.com",
+        "description": "The main contact for LarpBook"
+    },
+    {
+        "user": 2,
+        "contact_type": "Email",
+        "contact_value": "admin@profounddecisions.com",
+        "description": "The main contact for Profound Decisions"
+    },
+    {
+        "user": 2,
+        "contact_type": "Email",
+        "contact_value": "admin@curiouspastimes.com",
+        "description": "The main contact for Curious Pastimes"
+    },
+    {
+        "user": 1,
+        "contact_type": "Email",
+        "contact_value": "admin@foolsandheroes.com",
+        "description": "The main contact for Fools and Heroes"
+    },
+    {
+        "user": 1,
+        "contact_type": "Email",
+        "contact_value": "admin@lorientrust.com",
+        "description": "The main contact for Lorien Trust"
+    }
+]

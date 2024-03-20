@@ -1,0 +1,65 @@
+[
+    {
+        "id": 1,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "1"
+    },
+    {
+        "id": 2,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "2"
+    },
+    {
+        "id": 3,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "3"
+    },
+    {
+        "id": 4,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "4"
+    },
+    {
+        "id": 5,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "5"
+    },
+    {
+        "id": 6,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "6"
+    },
+    {
+        "id": 7,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "7"
+    },
+    {
+        "id": 8,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "8"
+    },
+    {
+        "id": 9,
+        "name": "Default",
+        "location": "Images/All_The_News.jpg",
+        "image_type": "banner_image",
+        "album_id": "9"
+    }
+]

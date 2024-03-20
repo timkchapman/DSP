@@ -1,9 +1,7 @@
 from flask import render_template
 from LarpBook.Main import bp
 from LarpBook import db
-from LarpBook.Models.Events.event import Event
-from LarpBook.Models.Events.eventdetails import EventDetails
-from LarpBook.Models.Users.user import User
+from LarpBook.Models import models
 from LarpBook.Utils import carousel_populator
 import json
 
@@ -15,14 +13,14 @@ def index():
     for event in events:
         print(event)
 
-    latest_events = Event.query.order_by(Event.id.desc()).limit(5).all()
-    latest_event_details = EventDetails.query.order_by(EventDetails.id.desc()).limit(5).all()
+    latest_events = models.Event.query.order_by(models.Event.id.desc()).limit(5).all()
+    latest_event_details = models.EventDetails.query.order_by(models.EventDetails.id.desc()).limit(5).all()
 
-    soonest_events = Event.query.join(EventDetails).order_by(EventDetails.date.asc()).limit(5).all()
-    soonest_event_details = EventDetails.query.order_by(EventDetails.date.asc()).limit(5).all()
+    soonest_events = models.Event.query.join(models.EventDetails).order_by(models.EventDetails.start_date.asc()).limit(5).all()
+    soonest_event_details = models.EventDetails.query.order_by(models.EventDetails.start_date.asc()).limit(5).all()
 
     organiser_ids = [event.organiser_id for event in latest_events + soonest_events]
-    organisers = User.query.filter(User.id.in_(organiser_ids)).all()
+    organisers = models.User.query.filter(models.User.id.in_(organiser_ids)).all()
 
     organiser_names = {organiser.id: organiser.username for organiser in organisers}
 
