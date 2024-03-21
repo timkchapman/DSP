@@ -18,3 +18,4 @@ from .Events.event import Event
 from .Events.eventwall import EventWall
 from .Images.image import Image
 from .Images.album import Album
+from .Images.albumimage import albumimage

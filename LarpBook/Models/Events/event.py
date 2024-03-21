@@ -5,7 +5,6 @@ class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     organiser_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False, unique=True)
-    cover_image_id = db.Column(db.Integer, db.ForeignKey('image.id'), nullable=True)
     description = db.Column(db.Text, nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
