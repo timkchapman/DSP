@@ -5,7 +5,7 @@ from LarpBook import db, create_app
 from datetime import datetime
 from LarpBook.extensions import bcrypt
 
-model_order = ['User', 'UserContact', 'Event', 'Album', 'Image']
+model_order = ['User', 'Venue', 'UserContact', 'Event', 'Album', 'Image', 'UserWall', 'EventWall']
 
 app = create_app()
 

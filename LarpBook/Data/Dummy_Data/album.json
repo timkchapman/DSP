@@ -3,7 +3,6 @@
         "id": "1",
         "name": "Default",
         "description": "Default album for Admin",
-        "cover_image_id": 1,
         "user_id": "1",
         "event_id": null
     },
@@ -11,7 +10,6 @@
         "id": "2",
         "name": "Default",
         "description": "Default album for Profound Decisions",
-        "cover_image_id": 1,
         "user_id": "2",
         "event_id": null
     },
@@ -19,7 +17,6 @@
         "id": "3",
         "name": "Default",
         "description": "Default album for Curious Pastimes",
-        "cover_image_id": 1,
         "user_id": "3",
         "event_id": null
     },
@@ -27,7 +24,6 @@
         "id": "4",
         "name": "Default",
         "description": "Default album for Fools and Heroes",
-        "cover_image_id": 1,
         "user_id": "4",
         "event_id": null
     },
@@ -35,7 +31,6 @@
         "id": "5",
         "name": "Default",
         "description": "Default album for Lorien Trust",
-        "cover_image_id": 1,
         "user_id": "5",
         "event_id": null
     },
@@ -43,7 +38,6 @@
         "id": "6",
         "name": "Default",
         "description": "Default album for 2024 Winter Solstice",
-        "cover_image_id": 1,
         "user_id": null,
         "event_id": "1"
     },
@@ -51,7 +45,6 @@
         "id": "7",
         "name": "Default",
         "description": "Default album for 2024 Spring Equinox",
-        "cover_image_id": 1,
         "user_id": null,
         "event_id": "2"
     },
@@ -59,7 +52,6 @@
         "id": "8",
         "name": "Default",
         "description": "Default album for 2024 Summer Solstice",
-        "cover_image_id": 1,
         "user_id": null,
         "event_id": "3"
     },
@@ -67,7 +59,6 @@
         "id": "9",
         "name": "Default",
         "description": "Default album for 2024 Autumn Equinox",
-        "cover_image_id": 1,
         "user_id": null,
         "event_id": "4"
     }
