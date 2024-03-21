@@ -8,10 +8,10 @@ class Event(db.Model):
     description = db.Column(db.Text, nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
-    latitude = db.Column(db.Float, nullable=False)
-    longitude = db.Column(db.Float, nullable=False)
-
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+    
     organiser = db.relationship('User', backref='events')
+    venue = db.relationship('Venue', back_populates='events')
 
     # Define indexes within the class definition
     idx_event_organiser_id = Index('idx_event_organiser_id', organiser_id)

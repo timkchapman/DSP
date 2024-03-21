@@ -39,8 +39,9 @@ def geocode(address):
             return None, None
         elif data.get('results'):
             # Extract latitude and longitude from the first result
-            latitude = data['results'][0]['geometry']['location']['lat']
-            longitude = data['results'][0]['geometry']['location']['lng']
+            location = data['results'][0]['geometry']['location']
+            latitude = location['lat']
+            longitude = location['lng']
             return latitude, longitude
         else:
             print("test failed.")
@@ -55,11 +56,11 @@ def geocode(address):
         return None, None
 
 
-def reverseGeocode(latitude, longitude):
+def reverseGeocode(plus_code):
     baseUrl = "https://maps.googleapis.com/maps/api/geocode/json"
 
     params = {
-        "latlng": f"{latitude},{longitude}",
+        "plus_code": f"{plus_code}",
         "key": api_key
     }
     try:
@@ -102,15 +103,15 @@ def reverseGeocode(latitude, longitude):
         print("Error decoding JSON response:", e)
         return None, None
 
-def batch_reverse_geocode(coordinates, event_ids):
+def batch_reverse_geocode(plus_codes, event_ids):
     addresses = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(reverseGeocode, coord[0], coord[1]) for coord in coordinates]
-        for future, coord, event_id in zip(concurrent.futures.as_completed(futures), coordinates, event_ids):
+        futures = [executor.submit(reverseGeocode, plus_code) for plus_code in plus_codes]
+        for future, plus_code, event_id in zip(concurrent.futures.as_completed(futures), plus_codes, event_ids):
             try:
                 address = future.result()
                 addresses[event_id] = address  # Use event ID as the key
             except Exception as e:
-                print(f"Error processing coordinate {coord}: {e}")
+                print(f"Error processing coordinate {plus_code}: {e}")
     return addresses
 

@@ -3,7 +3,9 @@ from flask_paginate import Pagination
 from LarpBook.Events import bp
 from LarpBook.extensions import db
 from LarpBook.Models import models
+from LarpBook.Utils import geocode
 from datetime import datetime
+from config import Config
 
 @bp.route('/')
 def index():
@@ -44,5 +46,22 @@ def categories():
 @bp.route('/event/<int:event_id>/')
 def event_page(event_id):
     event = models.Event.query.get_or_404(event_id)
-    cover_image = event.cover_image_id
-    return render_template('events/eventwall.html', event=event, image=cover_image)
+    album = models.Album.query.filter(models.Album.event.has(id=event_id)).first()
+    if album:
+        cover_image = models.Image.query.filter_by(album_id=album.id).first()
+    else:
+        cover_image = None
+        print("Cover Image Not Found")
+    organiser = models.User.query.get(event.organiser_id)
+
+    venue = event.venue_id
+    venue = models.Venue.query.get(venue)
+    address = ", ".join(filter(None, [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]))
+    geocode_address = address.replace(",", " ")
+    latlng = geocode.geocode(geocode_address)
+    if latlng and len(latlng) == 2:
+        lat, lng = latlng[0], latlng[1]
+    else:
+        lat, lng = None, None
+
+    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng)
