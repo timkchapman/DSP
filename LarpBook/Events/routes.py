@@ -106,6 +106,11 @@ def create_event():
             db.session.add(new_venue)
             db.session.commit()
             venue_id = new_venue.id
+
+            New_venue_wall = models.VenueWall(
+                venue=new_venue.id
+            )
+            db.session.add(New_venue_wall)
         
         new_event = models.Event(
             organiser_id=current_user.id,
