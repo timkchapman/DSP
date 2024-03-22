@@ -1,8 +1,9 @@
 from LarpBook import db
 from .albumimage import albumimage
 from sqlalchemy.ext.declarative import declared_attr
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class Album(db.Model):
+class Album(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(100), nullable=True)

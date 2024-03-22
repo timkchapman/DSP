@@ -4,8 +4,9 @@ from .blocklist import blocklist
 from .userwall import UserWall
 from ..Miscelanious.wallpost import WallPost
 from sqlalchemy import Index
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class User(db.Model):
+class User(db.Model, SerializerMixin):
   id = db.Column(db.Integer, primary_key=True)
   username = db.Column(db.String(50), unique=True, nullable=False)
   password = db.Column(db.String(50), unique=True, nullable=False)

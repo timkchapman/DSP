@@ -1,29 +1,34 @@
 [
     {
+        "id": 1,
         "user": 1,
         "contact_type": "Email",
         "contact_value": "admin@larpbook.com",
         "description": "The main contact for LarpBook"
     },
     {
+        "id": 2,
         "user": 2,
         "contact_type": "Email",
         "contact_value": "admin@profounddecisions.com",
         "description": "The main contact for Profound Decisions"
     },
     {
+        "id": 3,
         "user": 2,
         "contact_type": "Email",
         "contact_value": "admin@curiouspastimes.com",
         "description": "The main contact for Curious Pastimes"
     },
     {
+        "id": 4,
         "user": 1,
         "contact_type": "Email",
         "contact_value": "admin@foolsandheroes.com",
         "description": "The main contact for Fools and Heroes"
     },
     {
+        "id": 5,
         "user": 1,
         "contact_type": "Email",
         "contact_value": "admin@lorientrust.com",

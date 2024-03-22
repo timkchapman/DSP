@@ -1,6 +1,7 @@
 from LarpBook import db
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class Venue(db.Model):
+class Venue(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     address1 = db.Column(db.String(100), nullable=False)

@@ -47,7 +47,7 @@
                     {{ formatted_start_date }}<br> <!-- Removed reference to event_details -->
                     <strong><a href="{{ url_for('events.event_page', event_id=event.id) }}">{{ event.name
                             }}</a></strong><br>
-                    <a href="{{ url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{ organiser_name
+                    <a href="{{url_for('user.organiser_page', id=event.organiser_id) }}">{{ organiser_name
                         }}</a> <br>
                     {{ event.description }} <!-- Updated to reference event instead of event_details -->
                 </td>

@@ -1,7 +1,8 @@
 from LarpBook import db
 from datetime import datetime
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class Message(db.Model):
+class Message(db.Model, SerializerMixin):
     __tablename__ = 'message'
     messageId = db.Column(db.Integer, primary_key=True)
     conversationId = db.Column(db.Integer, db.ForeignKey('conversation.conversationId'), nullable=False)

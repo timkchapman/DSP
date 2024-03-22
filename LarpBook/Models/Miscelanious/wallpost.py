@@ -1,6 +1,7 @@
 from LarpBook import db
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class WallPost(db.Model):
+class WallPost(db.Model, SerializerMixin):
     __tablename__ = 'wallpost'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

@@ -1,6 +1,7 @@
 from LarpBook import db
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class PaymentMethod(db.Model):
+class PaymentMethod(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     payment_method = db.Column(db.String(100), nullable=False)

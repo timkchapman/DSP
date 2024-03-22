@@ -1,6 +1,7 @@
 from LarpBook import db
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class EventWall(db.Model):
+class EventWall(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     event = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
     posts = db.relationship('EventWallPost', backref='event_wall_post', lazy=True,

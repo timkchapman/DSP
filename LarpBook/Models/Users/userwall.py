@@ -1,6 +1,7 @@
 from LarpBook import db
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class UserWall(db.Model):
+class UserWall(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     posts = db.relationship('UserWallPost', backref='user_wall_post', lazy=True,
