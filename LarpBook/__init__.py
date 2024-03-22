@@ -1,7 +1,7 @@
 from flask import Flask
 
 from config import Config
-from LarpBook.extensions import db, login_manager, csrf
+from LarpBook.extensions import db, login_manager, csrf, session
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -11,6 +11,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
+    session.init_app(app)
 
     # Register blueprints here
     from LarpBook.Main import bp as main_bp

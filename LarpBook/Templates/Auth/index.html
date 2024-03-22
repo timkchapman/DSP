@@ -1,10 +1,43 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    .title {
+        text-align: center;
+    }
+
+    .auth {
+        display: flex;
+        position: relative;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .md-6 {
+        margin: 10px;
+    }
+</style>
 <span class="title">
-    <h1>{% block title %} User Authorisation {% endblock %}</h1>
+    <h1>{% block title %} Login or Create account {% endblock %}</h1>
 </span>
+
 <div class="auth">
-    <h2>Auth Blueprint</h2>
+    <div class="row">
+        <div class="md-6">
+            <h2>Login</h2>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+        </div>
+        <div class="md-6">
+            <h2>Register</h2>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register</a>
+        </div>
+    </div>
 </div>
 {% endblock %}

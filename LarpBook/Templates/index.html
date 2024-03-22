@@ -142,8 +142,6 @@
             {% endfor %}
         </div>
 
-
-
         <!-- Left and right controls -->
         <div class="carousel-controls">
             <a class="carousel-control-prev" href="#eventCarousel" role="button" data-slide="prev">
@@ -158,12 +156,36 @@
 <div class="row">
     <div class="col-md-6">
         <div class="text-container">
-            <p>this is some filler text</p>
+            <h1>Lorem Ipsum</h1>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod sapien et eros fringilla, at
+                ultricies
+                mauris maximus. Vivamus ultricies nulla ac risus congue ullamcorper. Nullam ac malesuada metus.
+                Suspendisse
+                sed sodales nunc. Sed interdum nisl vel velit consectetur viverra. Nullam non pulvinar arcu. Curabitur
+                placerat efficitur ligula. Integer facilisis eros nec sapien mollis, sed tristique tortor blandit.
+                Integer
+                nec vestibulum lacus. Fusce placerat urna et velit bibendum, in vehicula lectus bibendum. Nam mattis
+                dolor
+                nec nunc mollis consequat.</p>
+            <p>Phasellus dictum gravida lorem, nec convallis enim faucibus id. Integer luctus nulla sit amet lorem
+                sollicitudin, ut ultricies ligula suscipit. Aliquam non dui velit. Cras consectetur est ut mi bibendum
+                ullamcorper. Aliquam vel tellus at enim vulputate suscipit id nec libero. Sed varius, sapien eget
+                ultricies
+                sollicitudin, eros est suscipit sapien, eu pulvinar mi sapien in odio. Donec vel sem a metus dictum
+                imperdiet eget a nunc. Nullam ac ligula sit amet lorem sollicitudin dignissim.</p>
+            <p>Vestibulum volutpat, velit sit amet egestas consectetur, dolor sapien feugiat dui, vitae lacinia nisi
+                metus
+                non enim. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+                Aenean volutpat faucibus elit, at tincidunt leo fermentum vitae. Mauris mattis enim id dui fringilla,
+                non
+                euismod sapien malesuada. Curabitur consequat eros eu augue aliquam, et tempor metus varius. Nulla eget
+                nisi quis justo pharetra gravida. Sed non nisi vel eros rutrum volutpat. Nullam eget odio nec nisl
+                vestibulum finibus. Mauris in tellus libero.</p>
         </div>
     </div>
     <div class="col-md-6">
         <h2 class="mx-auto">Soonest Events</h2>
-        <table class="table-responsive">
+        <div class="table-container">
             <table class="table">
                 <!-- Table header -->
                 <thead>
@@ -178,19 +200,19 @@
                     {% for event_tuple in combined_data_soonest %}
                     {% set event = event_tuple[0] %}
                     {% set name = event_tuple[1] %}
-                    {% set address = event_tuple[2] %} <tr>
-                        <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
-                                name }}</a></td>
-                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a>
-                        </td>
+                    {% set address = event_tuple[2] %}
+                    <tr>
+                        <td><a href="{{url_for('user.organiser_page', id=event.organiser_id) }}">{{ name
+                                }}</a></td>
+                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></td>
                         <td>{{ event.start_date.strftime('%d %b') }} to {{ event.end_date.strftime('%d %b') }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </table>
+        </div>
         <h2 class="mx-auto">Newest Events</h2>
-        <table class="table-responsive">
+        <div class="table-container">
             <table class="table">
                 <!-- Table header -->
                 <thead>
@@ -203,21 +225,21 @@
                 <!-- Table body -->
                 <tbody>
                     {% for event_tuple in combined_data_latest %}
+                    {% set event = event_tuple[0] %}
+                    {% set name = event_tuple[1] %}
+                    {% set address = event_tuple[2] %}
                     <tr>
-                        {% set event = event_tuple[0] %}
-                        {% set name = event_tuple[1] %}
-                        {% set address = event_tuple[2] %}
-                        <td><a href="{{url_for('user.organiser_page', organiser_id=event.organiser_id) }}">{{
-                                name }}</a></td>
-                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a>
-                        </td>
+                        <td><a href="{{url_for('user.organiser_page', id=event.organiser_id) }}">{{ name
+                                }}</a></td>
+                        <td><a href="{{url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></td>
                         <td>{{ event.start_date.strftime('%d %b') }} to {{ event.end_date.strftime('%d %b') }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </table>
+        </div>
     </div>
+</div>
 </div>
 {% endblock %}
 

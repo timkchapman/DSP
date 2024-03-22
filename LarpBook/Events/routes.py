@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_paginate import Pagination
 from LarpBook.Events import bp
 from LarpBook.extensions import db
@@ -6,6 +6,10 @@ from LarpBook.Models import models
 from LarpBook.Utils import geocode
 from datetime import datetime
 from config import Config
+from LarpBook.Utils.Forms.forms import EventForm
+from LarpBook.Utils.authorisation import organiser_login_required
+from flask_login import current_user
+
 
 @bp.route('/')
 def index():
@@ -65,3 +69,58 @@ def event_page(event_id):
         lat, lng = None, None
 
     return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng)
+
+@bp.route('/create/', methods=['GET', 'POST'])
+@organiser_login_required
+def create_event():
+    form = EventForm()
+
+    if form.validate_on_submit():
+        venue = models.Venue.query.filter_by(
+            name = form.venue.data,
+            address1 = form.address1.data,
+            address2 = form.address2.data,
+            city = form.city.data,
+            county = form.county.data,
+            postcode = form.postcode.data
+        ).first()
+
+        if venue:
+            venue_id = venue.id
+        else:
+            new_venue = models.Venue(
+                name = form.venue.data,
+                address1 = form.address1.data,
+                address2 = form.address2.data,
+                city = form.city.data,
+                county = form.county.data,
+                postcode = form.postcode.data
+            )
+            db.session.add(new_venue)
+            db.session.commit()
+            venue_id = new_venue.id
+        
+        new_event = models.Event(
+            organiser_id=current_user.id,
+            name=form.name.data,
+            description=form.description.data,
+            start_date=form.start_date.data,
+            end_date=form.end_date.data,
+            venue_id=venue_id
+        )
+        db.session.add(new_event)
+        db.session.commit()
+
+        flash('Event created successfully', 'success')
+        return redirect(url_for('events.index'))
+    
+    return render_template('events/create.html', form=form)
+
+@bp.route('/check_venue')
+def check_venue():
+    name = request.args.get('name')
+    if name:
+        matching_venues = models.Venue.query.filter(models.Venue.name.ilike(f'%{name}%')).all()
+        venue_names = [{'name': venue.name} for venue in matching_venues]
+        return jsonify(venue_names)
+    return jsonify([])

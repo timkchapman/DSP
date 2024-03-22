@@ -1,9 +1,9 @@
-from flask import session,render_template, redirect, url_for, flash, request
+from flask import session,render_template, redirect, url_for, flash, request, get_flashed_messages
 from LarpBook.Auth import bp
 from flask_login import current_user, login_user
 from LarpBook.Models import models
 from LarpBook.extensions import bcrypt, login_manager
-from LarpBook.Utils.forms import RegistrationForm, LoginForm
+from LarpBook.Utils.Forms.forms import LoginForm, RegistrationForm
 from datetime import datetime
 from LarpBook import db
 
@@ -20,15 +20,27 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         username = form.username.data
+        print(f"Attempting to log in user {username}.")
         password = form.password.data
+        print(f"Password entered: {password}")
+        print(f"Hashed password: {bcrypt.generate_password_hash(password).decode('utf-8')}")
 
-        user = models.User.query.filter_by(username=username).first()
+        user = models.User.query.filter_by(username = username).first()
+        if user:
+            print(f"User found: {user.username}")
+            print(f"User password: {user.password}")
+        else:
+            print(f"User not found.")
 
-        if user and bcrypt.check_password_hash(user.password, password):
+        if username and bcrypt.check_password_hash(user.password, password):
             login_user(user, remember=form.remember.data)
+            print(f"User {user} logged in successfully.")
             return redirect(url_for('main.index'))
         else:
-            flash('Login failed. Please check your username and password.')
+            flash('Login failed. Please check your username and password.', 'error')
+            messages = get_flashed_messages(with_categories=True)
+            print(messages)
+            print(f"Login failed, please try again.")
     return render_template('auth/login.html', form=form)
 
 @bp.route('/logout/')
