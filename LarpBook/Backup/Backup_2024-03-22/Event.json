@@ -1,38 +1,38 @@
 [
     {
-        "id": "1",
-        "organiser_id": "2",
+        "id": 1,
+        "organiser_id": 2,
         "name": "2024 Winter Solstice",
         "description": "The first event of 2024",
         "start_date": "2024-04-26",
         "end_date": "2024-04-28",
-        "venue_id": "1"
+        "venue_id": 1
     },
     {
-        "id": "2",
-        "organiser_id": "2",
+        "id": 2,
+        "organiser_id": 2,
         "name": "2024 Spring Equinox",
         "description": "The second event of 2024",
         "start_date": "2024-06-14",
         "end_date": "2024-06-16",
-        "venue_id": "1"
+        "venue_id": 1
     },
     {
-        "id": "3",
-        "organiser_id": "2",
+        "id": 3,
+        "organiser_id": 2,
         "name": "2024 Summer Solstice",
         "description": "The third event of 2024",
         "start_date": "2024-07-26",
         "end_date": "2024-07-28",
-        "venue_id": "1"
+        "venue_id": 1
     },
     {
-        "id": "4",
-        "organiser_id": "2",
+        "id": 4,
+        "organiser_id": 2,
         "name": "2024 Autumn Equinox",
         "description": "The fourth event of 2024",
         "start_date": "2024-09-13",
         "end_date": "2024-09-15",
-        "venue_id": "1"
+        "venue_id": 1
     }
 ]

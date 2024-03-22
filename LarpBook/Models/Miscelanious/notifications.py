@@ -1,7 +1,8 @@
 from LarpBook import db
 from datetime import datetime
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class Notification(db.Model):
+class Notification(db.Model, SerializerMixin):
     __tablename__ = 'notification'
     notificationId = db.Column(db.Integer, primary_key=True)
     userId = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

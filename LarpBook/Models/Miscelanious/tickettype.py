@@ -1,6 +1,7 @@
 from LarpBook import db
+from LarpBook.Utils.serialise_models import SerializerMixin
 
-class TicketType(db.Model):
+class TicketType(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     event = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)

@@ -3,7 +3,7 @@ from flask_paginate import Pagination
 from LarpBook.Events import bp
 from LarpBook.extensions import db
 from LarpBook.Models import models
-from LarpBook.Utils import geocode
+from LarpBook.Utils import geocode, authorisation
 from datetime import datetime
 from config import Config
 from LarpBook.Utils.Forms.forms import EventForm
@@ -13,6 +13,7 @@ from flask_login import current_user
 
 @bp.route('/')
 def index():
+    logged_in = authorisation.is_user_logged_in()
     page = request.args.get('page', 1, type=int)
     per_page = 4
     
@@ -40,7 +41,7 @@ def index():
     pagination = Pagination(page=page, per_page=per_page, total=len(combined_data), css_framework='bootstrap4')
     combined_data = combined_data[pagination.page * pagination.per_page - pagination.per_page:pagination.page * pagination.per_page]
 
-    return render_template('events/index.html', events=combined_data, pagination=pagination)
+    return render_template('events/index.html', events=combined_data, pagination=pagination, logged_in=logged_in)
 
 
 @bp.route('/categories/')
@@ -49,10 +50,15 @@ def categories():
 
 @bp.route('/event/<int:event_id>/')
 def event_page(event_id):
+    logged_in = authorisation.is_user_logged_in()
     event = models.Event.query.get_or_404(event_id)
     album = models.Album.query.filter(models.Album.event.has(id=event_id)).first()
     if album:
+        print("Album Found")
         cover_image = models.Image.query.filter_by(album_id=album.id).first()
+        if cover_image:
+            print("Cover Image Found")
+            print(cover_image.location)
     else:
         cover_image = None
         print("Cover Image Not Found")
@@ -68,11 +74,12 @@ def event_page(event_id):
     else:
         lat, lng = None, None
 
-    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng)
+    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng, logged_in=logged_in)
 
 @bp.route('/create/', methods=['GET', 'POST'])
 @organiser_login_required
 def create_event():
+    logged_in = authorisation.is_user_logged_in()
     form = EventForm()
 
     if form.validate_on_submit():
@@ -111,10 +118,38 @@ def create_event():
         db.session.add(new_event)
         db.session.commit()
 
+        new_wall = models.EventWall(
+            event=new_event.id
+        )
+        db.session.add(new_wall)
+
+        new_album = models.Album(
+            name= 'Default',
+            description= 'album for : ' + new_event.name,
+            event_id=new_event.id
+        )
+        db.session.add(new_album)
+        db.session.commit()
+        album = models.Album.query.filter_by(event_id=new_event.id).first()
+        print(album.id)
+        print("Album Added")
+
+        new_image = models.Image(
+            name = 'Default',
+            location = 'Images/default.jpg',
+            album_id = new_album.id,
+            image_type = 'banner_image'
+        )
+        db.session.add(new_image)
+        db.session.commit()
+        image = models.Image.query.filter_by(album_id=new_album.id).first()
+        print(image.id)
+        print("Image Added")
+
         flash('Event created successfully', 'success')
         return redirect(url_for('events.index'))
     
-    return render_template('events/create.html', form=form)
+    return render_template('events/create.html', form=form, logged_in=logged_in)
 
 @bp.route('/check_venue')
 def check_venue():

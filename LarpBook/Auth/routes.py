@@ -4,6 +4,7 @@ from flask_login import current_user, login_user
 from LarpBook.Models import models
 from LarpBook.extensions import bcrypt, login_manager
 from LarpBook.Utils.Forms.forms import LoginForm, RegistrationForm
+from LarpBook.Utils import authorisation
 from datetime import datetime
 from LarpBook import db
 
@@ -14,6 +15,7 @@ def index():
 
 @bp.route('/login/', methods=['GET', 'POST'])
 def login():
+    logged_in = authorisation.is_user_logged_in()
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     
@@ -41,7 +43,7 @@ def login():
             messages = get_flashed_messages(with_categories=True)
             print(messages)
             print(f"Login failed, please try again.")
-    return render_template('auth/login.html', form=form)
+    return render_template('auth/login.html', form=form, logged_in=logged_in)
 
 @bp.route('/logout/')
 def logout():
@@ -52,6 +54,8 @@ def logout():
 
 @bp.route('/register/', methods=['GET', 'POST'])
 def register():
+    
+    logged_in = authorisation.is_user_logged_in()
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
@@ -101,7 +105,7 @@ def register():
             flash('An error occurred during registration. Please try again.')
             print(f"Error during registration: {str(e)}")
 
-    return render_template('auth/register.html', form = form)
+    return render_template('auth/register.html', form = form, logged_in=logged_in)
 
 @bp.route('/registration_success/')
 def registration_success():
