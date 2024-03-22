@@ -9,21 +9,30 @@
         {{ form.csrf_token }}
         <div class="form-group">
             {{ form.username.label }}
-            {{ form.username(class="form-control", id = "username") }}
-            {% for error in form.username.errors %}
-            <span class="text-danger">{{ error }}</span>
-            {% endfor %}
+            {{ form.username(class="form-control", id="username") }}
         </div>
         <div class="form-group">
             {{ form.password.label }}
-            {{ form.password(class="form-control", id = "password") }}
-            {% for error in form.password.errors %}
-            <span class="text-danger">{{ error }}</span>
-            {% endfor %}
+            {{ form.password(class="form-control", id="password") }}
         </div>
+
+        {% with messages = get_flashed_messages(with_categories = True) %}
+        <div class="flash-messages">
+            {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                {% if category == 'error' %}
+                <li class="flash-message">{{ message }}</li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endwith %}
+
         <div class="form-group form-check">
-            {{ form.remember(class="form-check-input", id = "remember") }}
-            {{ form.remember.label(class="form-check-label", for = "remember") }}
+            {{ form.remember(class="form-check-input", id="remember") }}
+            {{ form.remember.label(class="form-check-label", for="remember") }}
         </div>
         <button type="submit" class="btn btn-primary">Login</button>
     </form>

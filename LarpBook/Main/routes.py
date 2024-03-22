@@ -2,11 +2,13 @@ from flask import render_template
 from LarpBook.Main import bp
 from LarpBook import db
 from LarpBook.Models import models
-from LarpBook.Utils import carousel_populator, geocode
+from LarpBook.Utils import carousel_populator, geocode, authorisation
 import time
+
 
 @bp.route('/')
 def index():
+    logged_in = authorisation.is_user_logged_in()
     # Fetch events for carousel
     carousel_events = 'LarpBook/Static/JSON/carousel.json'
     carousel = carousel_populator.fetch_events_from_file(carousel_events)
@@ -44,4 +46,4 @@ def index():
         address = ", ".join(filter(None, [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]))
         combined_soonest.append((event, organiser_name, address))
     
-    return render_template('index.html', events=events, combined_data_latest=combined_latest, combined_data_soonest=combined_soonest)
+    return render_template('index.html', events=events, combined_data_latest=combined_latest, combined_data_soonest=combined_soonest, logged_in=logged_in)

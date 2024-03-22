@@ -68,7 +68,7 @@
 
         .content {
             width: 100vw;
-            height: calc(100%-50px);
+            height: calc(100vh- 120px);
             margin-top: 50px;
             padding: 20px;
 
@@ -100,10 +100,15 @@
     <div id="menu">
         <a href="{{ url_for('main.index') }}">Home</a>
         {% if logged_in %}
-        <a href="{{ url_for('user.index') }}">Profile</a>
+        {% if current_user.is_organiser %}
+        <a href="{{ url_for('user.organiser_page', id = current_user.id) }}">Profile</a>
+        {% else %}
+        <a href="{{ url_for('user.user_page', id = current_user.id) }}">Profile</a>
+        {% endif %}
         <a href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
-        <a href="{{ url_for('auth.index') }}">Login/Register</a>
+        <a href="{{ url_for('auth.login') }}">Login</a>
+        <a href="{{ url_for('auth.register') }}">Register</a>
         {% endif %}
         <a href="{{ url_for('events.index') }}">Events</a>
         <a href="{{ url_for('questions.index') }}">FAQ</a>

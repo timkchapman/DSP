@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+    #map {
+        height: 250px;
+        width: 375px;
+        /* Adjust the maximum width as needed */
+        margin: 0 auto;
+        margin-bottom: 20px;
+    }
+</style>
+<div class="container">
+    <h2>Create Event</h2>
+    <form method="POST" action="{{ url_for('events.create_event') }}">
+        {{ form.hidden_tag() }}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    {{ form.name.label(class="form-control-label") }}
+                    {{ form.name(class="form-control") }}
+                    {% for error in form.name.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div id="venueSuggestions"></div>
+                <div class="form-group">
+                    {{ form.description.label(class="form-control-label") }}
+                    {{ form.description(class="form-control") }}
+                    {% for error in form.description.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.start_date.label(class="form-control-label") }}
+                    {{ form.start_date(class="form-control") }}
+                    {% for error in form.start_date.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.end_date.label(class="form-control-label") }}
+                    {{ form.end_date(class="form-control") }}
+                    {% for error in form.end_date.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    {{ form.venue.label(class="form-control-label") }}
+                    {{ form.venue(class="form-control") }}
+                    {% for error in form.venue.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.address1.label(class="form-control-label") }}
+                    {{ form.address1(class="form-control") }}
+                    {% for error in form.address1.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.address2.label(class="form-control-label") }}
+                    {{ form.address2(class="form-control") }}
+                    {% for error in form.address2.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.city.label(class="form-control-label") }}
+                    {{ form.city(class="form-control") }}
+                    {% for error in form.city.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.county.label(class="form-control-label") }}
+                    {{ form.county(class="form-control") }}
+                    {% for error in form.county.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.postcode.label(class="form-control-label") }}
+                    {{ form.postcode(class="form-control") }}
+                    {% for error in form.postcode.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Event</button>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const venueInput = document.getElementById('venue');
+        const venueSuggestions = document.getElementById('venueSuggestions');
+
+        venueInput.addEventListener('input', async () => {
+            const inputText = venueInput.value.trim();
+            if (inputText.length === 0) {
+                venueSuggestions.innerHTML = '';
+                return;
+            }
+
+            const response = await fetch(`/check_venue?name=${encodeURIComponent(inputText)}`);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                const suggestions = data.map(venue => `<li>${venue.name}</li>`).join('');
+                venueSuggestions.innerHTML = `<ul>${suggestions}</ul>`;
+            } else {
+                venueSuggestions.innerHTML = '';
+            }
+        });
+    });
+</script>
+
+{% endblock %}

@@ -7,7 +7,12 @@ from LarpBook.Models.Users.user import User
 def index():
     return render_template('users/index.html')
 
-@bp.route('/organiser/<int:organiser_id>/')
-def organiser_page(organiser_id):
-    organiser = User.query.get_or_404(organiser_id)
+@bp.route('/organiser/<int:id>/')
+def organiser_page(id):
+    organiser = User.query.get_or_404(id)
     return render_template('users/organiser.html', organiser = organiser)
+
+@bp.route('/user/<int:id>/')
+def user_page(id):
+    user = User.query.get_or_404(id)
+    return render_template('users/user.html', user = user)

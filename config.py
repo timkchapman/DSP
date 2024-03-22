@@ -14,6 +14,7 @@ class Config:
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 	STATIC_FOLDER = 'Static'
 	STATIC_URL_PATH = 'LarpBook/static'
+	SESSION_TYPE = 'filesystem'
 
 	try:
 		GEOCODER_API_KEY = config['API_KEYS']['GEOCODER_API_KEY']
