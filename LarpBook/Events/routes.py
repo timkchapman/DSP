@@ -74,7 +74,7 @@ def event_page(event_id):
     else:
         lat, lng = None, None
 
-    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng, logged_in=logged_in)
+    return render_template('events/event.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng, logged_in=logged_in)
 
 @bp.route('/create/', methods=['GET', 'POST'])
 @organiser_login_required
