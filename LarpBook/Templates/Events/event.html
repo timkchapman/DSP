@@ -52,6 +52,9 @@
     </div>
 
     <div class="description-container">
+        {% if current_user == event.organiser %}
+        <a href="{{ url_for('events.add_tickets', event_id=event.id) }}" class="btn btn-primary">Add Tickets</a>
+        {% endif %}
         <h2>Details:</h2>
         <p>{{ event.description }}</p>
     </div>

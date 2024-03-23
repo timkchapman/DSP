@@ -6,7 +6,7 @@ from LarpBook.Models import models
 from LarpBook.Utils import geocode, authorisation
 from datetime import datetime
 from config import Config
-from LarpBook.Utils.Forms.forms import EventForm
+from LarpBook.Static.Forms.forms import EventForm, AddTicketForm
 from LarpBook.Utils.authorisation import organiser_login_required
 from flask_login import current_user
 
@@ -164,3 +164,28 @@ def check_venue():
         venue_names = [{'name': venue.name} for venue in matching_venues]
         return jsonify(venue_names)
     return jsonify([])
+
+@bp.route('/add_tickets/<int:event_id>', methods=['POST'])
+@organiser_login_required
+def add_tickets(event_id):
+    event = models.Event.query.get_or_404(event_id)
+    if not event.organiser_id == current_user.id:
+        flash('You do not have permission to add tickets to this event.', 'error')
+        return redirect(url_for('events.event', event_id=event.id))  # Redirect to event detail page or somewhere else
+
+    form = AddTicketForm()
+    if form.validate_on_submit():
+        new_ticket = models.TicketType(
+            event=event_id,
+            name=form.name.data,
+            price=form.price.data,
+            description=form.description.data,
+            available=form.available.data,
+            max_tickets=form.max_tickets.data,
+            tickets_sold=0
+        )
+        db.session.add(new_ticket)
+        db.session.commit()
+        flash('Ticket added successfully', 'success')
+        return redirect(url_for('events.event', event_id=event.id))
+    return render_template('events/add_tickets.html', form=form, event=event)

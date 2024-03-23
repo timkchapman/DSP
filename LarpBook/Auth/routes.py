@@ -3,7 +3,7 @@ from LarpBook.Auth import bp
 from flask_login import current_user, login_user
 from LarpBook.Models import models
 from LarpBook.extensions import bcrypt, login_manager
-from LarpBook.Utils.Forms.forms import LoginForm, RegistrationForm
+from LarpBook.Static.Forms.forms import LoginForm, RegistrationForm
 from LarpBook.Utils import authorisation
 from datetime import datetime
 from LarpBook import db
