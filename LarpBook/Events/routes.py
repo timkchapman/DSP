@@ -74,7 +74,7 @@ def event_page(event_id):
     else:
         lat, lng = None, None
 
-    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng, logged_in=logged_in)
+    return render_template('events/event.html', event=event, image = cover_image, organiser = organiser, address = address, lat = lat, lng = lng, logged_in=logged_in)
 
 @bp.route('/create/', methods=['GET', 'POST'])
 @organiser_login_required
@@ -106,6 +106,11 @@ def create_event():
             db.session.add(new_venue)
             db.session.commit()
             venue_id = new_venue.id
+
+            New_venue_wall = models.VenueWall(
+                venue=new_venue.id
+            )
+            db.session.add(New_venue_wall)
         
         new_event = models.Event(
             organiser_id=current_user.id,

@@ -27,3 +27,9 @@ class EventWallPost(WallPost):
     __mapper_args__ = {
         'polymorphic_identity': 'event_wall'
     }
+
+class VenueWallPost(WallPost):
+    venue_wall_id = db.Column(None, db.ForeignKey('venue_wall.id'), nullable=False)
+    __mapper_args__ = {
+        'polymorphic_identity': 'venue_wall'
+    }

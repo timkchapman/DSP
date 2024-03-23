@@ -17,6 +17,7 @@ from .Messaging.participants import ConversationParticipant
 from .Events.event import Event
 from .Events.eventwall import EventWall
 from .Venues.venue import Venue
+from .Venues.venuewall import VenueWall
 from .Images.image import Image
 from .Images.album import Album
 from .Images.albumimage import albumimage
