@@ -87,7 +87,6 @@ def register():
             new_user_album = models.Album(
                 name = 'default',
                 description = 'Default album for {User.username}',
-                cover_image_id = 1,
                 user_id = user_id,
                 event_id = None
             )

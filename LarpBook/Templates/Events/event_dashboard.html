@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Event Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Event Dashboard</h1>
+    <h2><strong><a href="{{ url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></strong></h2>
+    <p>Description: {{ event.description }}</p>
+    <p>Start Date: {{ event.start_date }}</p>
+    <p>End Date: {{ event.end_date }}</p>
+    <h2>Tickets</h2>
+    {% if tickets %}
+    <ul>
+        {% for ticket in tickets %}
+        <li>{{ ticket.name }} - Price: {{ ticket.price }} - Available? {{ ticket.available }}
+            <form action="{{ url_for('events.toggle_ticket_active', ticket_id=ticket.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary">
+                    {% if ticket.available %}
+                    Deactivate
+                    {% else %}
+                    Activate
+                    {% endif %}
+                </button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No tickets available for this event.</p>
+    {% endif %}
+    <a href="{{ url_for('events.add_tickets', event_id=event.id) }}" class="btn btn-primary">Add Tickets</a>
+</div>
+{% endblock %}

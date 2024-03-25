@@ -34,4 +34,14 @@ def organiser_page(id):
 def user_page(id):
     logged_in = authorisation.is_user_logged_in()
     user = User.query.get_or_404(id)
+
+    album = Album.query.filter_by(name='Default', user_id=user.id).first()
+    if album:
+        cover_image = Image.query.filter_by(album_id=album.id).first()
+        if cover_image:
+            print(cover_image.location)
+    else:  
+        cover_image = None
+        print("Cover Image Not Found")
+    
     return render_template('users/user.html', user = user, logged_in=logged_in)

@@ -12,4 +12,3 @@ class PaymentMethod(db.Model, SerializerMixin):
     billing_postcode = db.Column(db.String(100), nullable=False)
     billing_city = db.Column(db.String(100), nullable=False)
     billing_country = db.Column(db.String(100), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
