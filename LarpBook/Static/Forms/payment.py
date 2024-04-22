@@ -1,8 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, DateField
+from wtforms import StringField, SelectField
 from wtforms.validators import InputRequired, Length
 
 class PaymentMethodForm(FlaskForm):
+    payment_method_select = SelectField('Payment Method', choices=[], coerce=int)
     payment_method = StringField('Payment Method', validators=[InputRequired(), Length(max=100)])
     card_number = StringField('Card Number', validators=[InputRequired(), Length(max=100)])
     expiry_date = StringField('Expiry Date (MM/YYYY)', validators=[InputRequired(), Length(max=7)])

@@ -15,6 +15,7 @@ class Config:
 	STATIC_FOLDER = 'Static'
 	STATIC_URL_PATH = 'LarpBook/static'
 	SESSION_TYPE = 'filesystem'
+	SESSION_COOKIE_SAMESITE = 'Lax'
 
 	WTF_CSRF_ENABLED = True
 
@@ -29,6 +30,6 @@ class Config:
 		raise KeyError('SECRET_KEY not found in the configuration file')
 	
 	try:
-		STRIPE_KEY = config['API_KEYS']['STRIPE_KEY']
+		STRIPE_SECRET_KEY = config['API_KEYS']['STRIPE_SECRET_KEY']
 	except KeyError:
 		raise KeyError('STRIPE_KEY not found in the configuration file')

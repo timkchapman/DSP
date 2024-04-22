@@ -2,13 +2,15 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_paginate import Pagination
 from LarpBook.Events import bp
 from LarpBook.extensions import db
-from LarpBook.Models.models import Event, User, Venue, Album, Image, EventWall, VenueWall, TicketType
+from LarpBook.Models.models import Event, User, Venue, Album, Image, EventWall, VenueWall, TicketType, PaymentMethod, Ticket
 from LarpBook.Utils import geocode, authorisation
 from datetime import datetime
 from config import Config
-from LarpBook.Static.Forms.forms import EventForm, AddTicketForm, PaymentMethodForm
+from LarpBook.Static.Forms.forms import EventForm, AddTicketForm, PaymentMethodForm, ChooseQuantityForm
 from LarpBook.Utils.authorisation import organiser_login_required
 from flask_login import current_user
+import stripe
+import json
 
 @bp.route('/')
 def index():
@@ -230,7 +232,7 @@ def add_tickets(event_id):
         db.session.commit()
         flash('Ticket added successfully', 'success')
         return redirect(url_for('events.event_dashboard', event_id=event.id))
-    return render_template('events/add_ticket.html', logged_in = logged_in, form=form, event=event)
+    return render_template('tickets/add_ticket.html', logged_in = logged_in, form=form, event=event)
 
 @bp.route('/event_dashboard/<int:ticket_id>/edit_ticket', methods=['GET', 'POST'])
 @organiser_login_required
@@ -249,7 +251,7 @@ def edit_ticket(ticket_id):
         db.session.commit()
         flash('Ticket updated successfully', 'success')
         return redirect(url_for('events.event_dashboard', event_id=event.id))
-    return render_template('events/edit_ticket.html', logged_in = logged_in, form=form, ticket=ticket, event=event)
+    return render_template('tickets/edit_ticket.html', logged_in = logged_in, form=form, ticket=ticket, event=event)
 
 @bp.route('/event_dashboard/<int:ticket_id>/delete_ticket', methods=['GET', 'POST'])
 @organiser_login_required
@@ -266,8 +268,6 @@ def delete_ticket(ticket_id):
     flash('Ticket deleted successfully', 'success')
     return redirect(url_for('events.event_page', event_id=event.id))
 
-from flask import request
-
 @bp.route('/toggle_ticket_active/<int:ticket_id>', methods=['POST'])
 @organiser_login_required
 def toggle_ticket_active(ticket_id):
@@ -283,20 +283,38 @@ def toggle_ticket_active(ticket_id):
 
     return redirect(url_for('events.event_dashboard', event_id=ticket.event))
 
-@bp.route('/purchase_ticket/<int:ticket_id>', methods=['GET','POST'])
-def purchase_ticket(ticket_id):
-    logged_in = authorisation.is_user_logged_in()
+@bp.route('/checkout/<int:ticket_id>/', methods=['GET', 'POST'])
+def checkout(ticket_id):
     ticket = TicketType.query.get_or_404(ticket_id)
+    if not ticket.available:
+        flash('This ticket is not available for purchase.', 'error')
+        return redirect(url_for('events.event_page', event_id=ticket.event))
 
-    form = PaymentMethodForm()
+    event = Event.query.get(ticket.event)
+    organiser = User.query.get(event.organiser_id)
 
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            ticket.tickets_sold += 1
-            db.session.commit()
-            flash('Ticket purchased successfully', 'success')
-            return redirect(url_for('events.event_page', event_id=ticket.event))
-        else:
-            flash('There was an error processing your payment', 'error')
-    
-    return render_template('events/purchase_ticket.html', ticket=ticket, logged_in=logged_in)
+    return render_template('tickets/checkout.html', ticket=ticket, event=event, organiser=organiser)
+
+@bp.route('/simulate_purchase/<int:ticket_id>/<result>', methods=['POST'])
+def simulate_purchase(ticket_id, result):
+    if result == 'success':
+        ticket = TicketType.query.get_or_404(ticket_id)
+        # Create the ticket for the user
+        new_ticket = Ticket(
+            event_id=ticket.event,
+            user_id=current_user.id,
+            ticket_type=ticket.name,
+            ticket_price=ticket.price,
+            ticket_code=f'{current_user.id}-{ticket.event}-{ticket_id}'
+        )
+        db.session.add(new_ticket)
+        db.session.commit()
+        # Increment tickets_sold
+        ticket.tickets_sold += 1
+        db.session.commit()
+        flash('Ticket purchased successfully.', 'success')
+        return redirect(url_for('events.event_page', event_id=ticket.event))
+    elif result == 'failure':
+        flash('Ticket purchase failed.', 'error')
+
+    return redirect(url_for('events.checkout', ticket_id=ticket_id))

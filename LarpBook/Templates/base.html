@@ -7,7 +7,6 @@
     <title>{% block title %} LarpBook {% endblock %} </title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Custom CSS -->
     <style>
         /* Center the title */
         .global-title {
@@ -101,10 +100,10 @@
         <a href="{{ url_for('main.index') }}">Home</a>
         {% if logged_in %}
         {% if current_user.is_organiser %}
-        <a href="{{ url_for('user.organiser_page', id = current_user.id) }}">Profile</a>
+        <a href="{{ url_for('user.organiser_page', id=current_user.id) }}">Profile</a>
         <a href="{{ url_for('events.create_event') }}">Create Event</a>
         {% else %}
-        <a href="{{ url_for('user.user_page', id = current_user.id) }}">Profile</a>
+        <a href="{{ url_for('user.user_page', id=current_user.id) }}">Profile</a>
         {% endif %}
         <a href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
@@ -114,6 +113,8 @@
         <a href="{{ url_for('events.index') }}">Events</a>
         <a href="{{ url_for('questions.index') }}">FAQ</a>
     </div>
+
+
 
     <!-- Content Block -->
     <div class="content">

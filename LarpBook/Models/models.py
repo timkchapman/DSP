@@ -1,6 +1,7 @@
 from .Users.user import User
 from .Users.friendslist import friendslist
 from .Users.blocklist import blocklist
+from .Users.userevents import userevents
 from .Users.userwall import UserWall
 from .Users.usercontact import UserContact
 from .Users.userpreferences import UserPreferences

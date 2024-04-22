@@ -1,7 +1,7 @@
 from flask import session,render_template, redirect, url_for, flash, request, get_flashed_messages
 from LarpBook.Auth import bp
-from flask_login import current_user, login_user
-from LarpBook.Models import models
+from flask_login import current_user, login_user, logout_user
+from LarpBook.Models.models import User, Image, Album, UserWall, UserContact
 from LarpBook.extensions import bcrypt, login_manager
 from LarpBook.Static.Forms.forms import LoginForm, RegistrationForm
 from LarpBook.Utils import authorisation
@@ -13,54 +13,40 @@ def index():
 
     return render_template('auth/index.html')
 
+def is_user_logged_in():
+    return current_user.is_authenticated
+
 @bp.route('/login/', methods=['GET', 'POST'])
 def login():
-    logged_in = authorisation.is_user_logged_in()
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     
     form = LoginForm()
     if form.validate_on_submit():
         username = form.username.data
-        print(f"Attempting to log in user {username}.")
         password = form.password.data
-        print(f"Password entered: {password}")
-        print(f"Hashed password: {bcrypt.generate_password_hash(password).decode('utf-8')}")
 
-        user = models.User.query.filter_by(username = username).first()
-        if user:
-            print(f"User found: {user.username}")
-            print(f"User password: {user.password}")
-        else:
-            print(f"User not found.")
-
-        if username and bcrypt.check_password_hash(user.password, password):
+        user = User.query.filter_by(username=username).first()
+        if user and bcrypt.check_password_hash(user.password, password):
             login_user(user, remember=form.remember.data)
-            print(f"User {user} logged in successfully.")
             return redirect(url_for('main.index'))
         else:
             flash('Login failed. Please check your username and password.', 'error')
-            messages = get_flashed_messages(with_categories=True)
-            print(messages)
-            print(f"Login failed, please try again.")
-    return render_template('auth/login.html', form=form, logged_in=logged_in)
+    return render_template('auth/login.html', form=form)
 
 @bp.route('/logout/')
 def logout():
-    # Clear the session data
-    session.clear()
-    # redirect the user to the index page
+    logout_user()
     return redirect(url_for('main.index'))
 
 @bp.route('/register/', methods=['GET', 'POST'])
 def register():
-    
     logged_in = authorisation.is_user_logged_in()
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
             # Create a new user object from the dorm
-            new_user = models.User(
+            new_user = User(
                 username=form.username.data,
                 password=bcrypt.generate_password_hash(form.password.data).decode('utf-8'),
                 first_name=form.first_name.data,
@@ -77,27 +63,41 @@ def register():
             # Create auxiliary user objects
             user_id = new_user.id
 
-            new_user_contact = models.UserContact(
+            new_user_contact = UserContact(
                 user = user_id,
                 contact_type = 'email',
                 contact_value = form.email.data,
                 description = 'Primary email address'
             )
 
-            new_user_album = models.Album(
-                name = 'default',
-                description = 'Default album for {User.username}',
+            new_user_album = Album(
+                name = 'Default',
+                description = 'Default album for {new_user.username}',
                 user_id = user_id,
                 event_id = None
             )
-
-            new_user_wall = models.UserWall(
-                user = user_id,
-            )
-
+            print(f"New user album created: {new_user_album}")
             db.session.add(new_user_contact)
             db.session.add(new_user_album)
             db.session.commit()
+
+            new_image = Image(
+            name = 'Default',
+            location = 'Images/default.jpg',
+            album_id = new_user_album.id,
+            image_type = 'banner_image'
+            )
+            print(f"New image created: {new_image}")
+            db.session.add(new_image)
+            db.session.commit()
+            image = Image.query.filter_by(album_id=new_user_album.id).first()
+
+            new_user_wall = UserWall(
+                user = user_id,
+            )
+            db.session.add(new_user_wall)
+            db.session.commit()
+            
             return redirect(url_for('auth.registration_success'))
         except Exception as e:
             db.session.rollback()
@@ -112,4 +112,4 @@ def registration_success():
 
 @login_manager.user_loader
 def load_user(id):
-    return models.User.query.get(int(id))
+    return User.query.get(int(id))

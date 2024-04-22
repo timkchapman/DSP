@@ -9,6 +9,8 @@ import time
 @bp.route('/')
 def index():
     logged_in = authorisation.is_user_logged_in()
+    if not logged_in:
+        print("User is not logged in")
     # Fetch events for carousel
     carousel_events = 'LarpBook/Static/JSON/carousel.json'
     carousel = carousel_populator.fetch_events_from_file(carousel_events)

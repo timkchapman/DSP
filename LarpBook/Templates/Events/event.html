@@ -96,8 +96,7 @@
                     <td>{{ ticket.description }}</td>
                     <td>{% if ticket.max_tickets > ticket.tickets_sold %} Yes {% else %} Sold Out {% endif %}</td>
                     <td>{% if ticket.max_tickets > ticket.tickets_sold %}<a
-                            href="{{ url_for('events.purchase_ticket', ticket_id=ticket.id) }}"
-                            class="btn btn-primary">Buy
+                            href="{{ url_for('events.checkout', ticket_id=ticket.id) }}" class="btn btn-primary">Buy
                             Now</a>{% else %} - {% endif %}</td>
                 </tr>
                 {% endfor %}

@@ -1,7 +1,7 @@
 from flask import Flask
 
 from config import Config
-from LarpBook.extensions import db, login_manager, csrf, session
+from LarpBook.extensions import db, login_manager, csrf, session, stripe
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -12,6 +12,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     csrf.init_app(app)
     session.init_app(app)
+    stripe.init_app(app)
 
     # Register blueprints here
     from LarpBook.Main import bp as main_bp
@@ -29,9 +30,15 @@ def create_app(config_class=Config):
     from LarpBook.Questions import bp as questions_bp
     app.register_blueprint(questions_bp, url_prefix='/questions')
 
+    configure_jinja(app)
 
     @app.route('/test/')
     def test_page():
         return '<h1>Testing the Flask Application Factory Pattern</h1>'
 
     return app
+
+def configure_jinja(app):
+    @app.template_filter('currency')
+    def currency_filter(value):
+        return f"£{value:.2f}"

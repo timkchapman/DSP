@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Checkout</h1>
+
+<!-- Display event information -->
+
+<div>
+    <h2>Event Information</h2>
+    <p>Event Name: {{ event.name }}</p>
+    <p>Start Date: {{ event.start_date }}</p>
+    <p>End Date: {{ event.end_date }}</p>
+    <p>Organiser: {{ organiser.username }}</p>
+</div>
+
+<!-- Display ticket information -->
+<div>
+    <h2>Ticket Information</h2>
+    <p>Ticket Name: {{ ticket.name }}</p>
+    <p>Price: ${{ ticket.price }}</p>
+    <p>Quantity: {{ ticket.max_tickets - ticket.tickets_sold}}</p>
+</div>
+
+<!-- Buttons to simulate purchase -->
+<div>
+    <form method="POST" action="{{ url_for('events.simulate_purchase', ticket_id=ticket.id, result='success') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Simulate Successful Purchase</button>
+    </form>
+    <form method="POST" action="{{ url_for('events.simulate_purchase', ticket_id=ticket.id, result='failure') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Simulate Failed Purchase</button>
+    </form>
+</div>
+
+<!-- Flash messages -->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<ul>
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+{% endblock %}

@@ -1,8 +1,8 @@
 from flask import render_template
 from LarpBook.User import bp
 from LarpBook import db
-from LarpBook.Models.models import User, Album, Image, Event, UserContact
-from LarpBook.Utils import authorisation
+from LarpBook.Models.models import User, Album, Image, Ticket, Event, UserContact, userevents
+from LarpBook.Utils import authorisation, user_events
 
 @bp.route('/')
 def index():
@@ -36,6 +36,7 @@ def user_page(id):
     user = User.query.get_or_404(id)
 
     album = Album.query.filter_by(name='Default', user_id=user.id).first()
+    print(album.name)
     if album:
         cover_image = Image.query.filter_by(album_id=album.id).first()
         if cover_image:
@@ -43,5 +44,10 @@ def user_page(id):
     else:  
         cover_image = None
         print("Cover Image Not Found")
+
+    events = user_events.user_has_events(user.id)
+    print(events)
+
+    tickets = Ticket.query.filter_by(user_id=user.id).all()
     
-    return render_template('users/user.html', user = user, logged_in=logged_in)
+    return render_template('users/user.html', user = user, logged_in=logged_in, album=album, image = cover_image, events = events, tickets = tickets)
