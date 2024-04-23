@@ -2,6 +2,7 @@ from LarpBook import db
 from .friendslist import friendslist
 from .blocklist import blocklist
 from .userwall import UserWall
+from .userevents import userevents
 from ..Miscelanious.wallpost import WallPost
 from sqlalchemy import Index
 from LarpBook.Utils.serialise_models import SerializerMixin
@@ -33,6 +34,8 @@ class User(db.Model, SerializerMixin):
                               lazy = 'dynamic')
 
   wall_posts = db.relationship('WallPost', backref = 'user', lazy = True)
+  events = db.relationship('Event', secondary = userevents, backref = 'attendees')
+  tags = db.relationship('Tags', secondary = 'usertags', back_populates = 'users')
 
   idx_user_id = Index('idx_user_id', id)
 

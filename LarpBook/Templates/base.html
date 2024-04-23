@@ -5,9 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} LarpBook {% endblock %} </title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- Custom CSS -->
+    <!-- Include Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Include jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Include Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
     <style>
         /* Center the title */
         .global-title {
@@ -68,7 +74,7 @@
 
         .content {
             width: 100vw;
-            height: calc(100vh- 120px);
+            height: calc(100vh- 150px);
             margin-top: 50px;
             padding: 20px;
 
@@ -101,10 +107,10 @@
         <a href="{{ url_for('main.index') }}">Home</a>
         {% if logged_in %}
         {% if current_user.is_organiser %}
-        <a href="{{ url_for('user.organiser_page', id = current_user.id) }}">Profile</a>
+        <a href="{{ url_for('user.organiser_page', id=current_user.id) }}">Profile</a>
         <a href="{{ url_for('events.create_event') }}">Create Event</a>
         {% else %}
-        <a href="{{ url_for('user.user_page', id = current_user.id) }}">Profile</a>
+        <a href="{{ url_for('user.user_page', id=current_user.id) }}">Profile</a>
         {% endif %}
         <a href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
@@ -114,6 +120,8 @@
         <a href="{{ url_for('events.index') }}">Events</a>
         <a href="{{ url_for('questions.index') }}">FAQ</a>
     </div>
+
+
 
     <!-- Content Block -->
     <div class="content">

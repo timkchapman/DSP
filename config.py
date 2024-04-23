@@ -15,6 +15,9 @@ class Config:
 	STATIC_FOLDER = 'Static'
 	STATIC_URL_PATH = 'LarpBook/static'
 	SESSION_TYPE = 'filesystem'
+	SESSION_COOKIE_SAMESITE = 'Lax'
+
+	WTF_CSRF_ENABLED = True
 
 	try:
 		GEOCODER_API_KEY = config['API_KEYS']['GEOCODER_API_KEY']
@@ -25,3 +28,8 @@ class Config:
 		SECRET_KEY = config['API_KEYS']['SECRET_KEY']
 	except KeyError:
 		raise KeyError('SECRET_KEY not found in the configuration file')
+	
+	try:
+		STRIPE_SECRET_KEY = config['API_KEYS']['STRIPE_SECRET_KEY']
+	except KeyError:
+		raise KeyError('STRIPE_KEY not found in the configuration file')

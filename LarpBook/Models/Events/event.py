@@ -11,8 +11,10 @@ class Event(db.Model, SerializerMixin):
     end_date = db.Column(db.Date, nullable=False)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
     
-    organiser = db.relationship('User', backref='events')
+    organiser = db.relationship('User', backref='organiser_events')
     venue = db.relationship('Venue', back_populates='events')
+    event_tickets = db.relationship('Ticket', back_populates='event')
+    tags = db.relationship('Tags', secondary='eventtags', back_populates='events')
 
     # Define indexes within the class definition
     idx_event_organiser_id = Index('idx_event_organiser_id', organiser_id)

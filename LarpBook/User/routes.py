@@ -1,8 +1,10 @@
-from flask import render_template
+from flask import render_template, url_for
 from LarpBook.User import bp
 from LarpBook import db
-from LarpBook.Models.models import User, Album, Image, Event, UserContact
-from LarpBook.Utils import authorisation
+from LarpBook.Models.models import User, Album, Image, Ticket, Event, UserContact, userevents, TicketType
+from LarpBook.Utils import authorisation, user_events
+import os
+import urllib.parse
 
 @bp.route('/')
 def index():
@@ -34,4 +36,29 @@ def organiser_page(id):
 def user_page(id):
     logged_in = authorisation.is_user_logged_in()
     user = User.query.get_or_404(id)
-    return render_template('users/user.html', user = user, logged_in=logged_in)
+
+    album = Album.query.filter_by(name='Default', user_id=user.id).first()
+    cover_image = Image.query.filter_by(album_id=album.id).first() if album else None
+
+    events = user_events.user_has_events(user.id)
+
+    tickets = Ticket.query.filter_by(user_id=user.id).all()
+
+    # Fetch name and price from TicketType for each ticket
+    ticket_details = []
+    for ticket in tickets:
+        ticket_type = TicketType.query.get(ticket.ticket_type_id)
+        event_name_cleaned = ticket_type.event.name.replace(' ', '_')
+        
+        ticket_location = url_for('static', filename=f'Tickets/{event_name_cleaned}/ticket_{ticket.id}.pdf')
+        print(ticket_location)
+        ticket_details.append({
+            'event_name': ticket_type.event.name,
+            'ticket_type_name': ticket_type.name,
+            'ticket_price': ticket_type.price,
+            'ticket_code': ticket.ticket_code,
+            'ticket_location': ticket_location
+        })
+
+    return render_template('users/user.html', user=user, logged_in=logged_in, album=album,
+                           image=cover_image, events=events, tickets=tickets, ticket_details=ticket_details)

@@ -15,3 +15,6 @@ LB_env/*
 
 #Ignore session
 flask_session/*
+
+#Ignore backups
+LarpBook/Backup/*

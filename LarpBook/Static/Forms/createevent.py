@@ -15,3 +15,4 @@ class EventForm(FlaskForm):
     city = StringField('City', validators=[Length(max=100)])
     county = StringField('County', validators=[DataRequired(), Length(max=100)])
     postcode = StringField('Postcode', validators=[DataRequired(), Length(max=10)])
+    tags = StringField('Tags, (comma-seperated)')

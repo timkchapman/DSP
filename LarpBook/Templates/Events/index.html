@@ -31,6 +31,25 @@
 
 <div class="container">
     <h1>Upcoming Events</h1>
+    <div>
+        <form method="GET" action="{{ url_for('events.index') }}">
+            <label for="tag">Filter by Tag:</label>
+            <input type="text" id="tag" name="tag" placeholder="Enter tag">
+            <button type="submit">Apply</button>
+        </form>
+        <form method="GET" action="{{ url_for('events.index') }}">
+            <label for="tickets">Filter by Attendees:</label>
+            <select id="tickets" name="tickets">
+                <option value="">All</option>
+                <option value="lt20">Less than 20</option>
+                <option value="lt50">Up to 50</option>
+                <option value="lt100">Up to 100</option>
+                <option value="lt500">Up to 500</option>
+                <option value="gt500">More than 500</option>
+            </select>
+            <button type="submit">Apply</button>
+        </form>
+    </div>
     <table class="event-table">
         <thead>
             <tr>
@@ -40,22 +59,21 @@
         </thead>
         <tbody>
             {% if events %}
-            {% for event, organiser_name, formatted_start_date in events %} <!-- Adjusted loop -->
+            {% for event, organiser_name, formatted_start_date in events %}
             <tr>
                 <td>{{ formatted_start_date }}</td>
                 <td>
-                    {{ formatted_start_date }}<br> <!-- Removed reference to event_details -->
+                    {{ formatted_start_date }}<br>
                     <strong><a href="{{ url_for('events.event_page', event_id=event.id) }}">{{ event.name
                             }}</a></strong><br>
-                    <a href="{{url_for('user.organiser_page', id=event.organiser_id) }}">{{ organiser_name
-                        }}</a> <br>
-                    {{ event.description }} <!-- Updated to reference event instead of event_details -->
+                    <a href="{{ url_for('user.organiser_page', id=event.organiser_id) }}">{{ organiser_name }}</a> <br>
+                    {{ event.description }}
                 </td>
             </tr>
             {% endfor %}
             {% else %}
             <tr>
-                <td>No upcoming events.</td> <!-- Adjusted colspan -->
+                <td colspan="2">No upcoming events.</td>
             </tr>
             {% endif %}
         </tbody>

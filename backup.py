@@ -5,6 +5,7 @@ from LarpBook import db
 from LarpBook.Models import models
 from LarpBook import create_app
 import inspect
+from sqlalchemy import select
 
 app = create_app()
 
@@ -39,6 +40,46 @@ def backup_database():
                 print(f"Backup for {model_name} created successfully.")
         except Exception as e:
             print(f"Error creating backup for {model_name}: {e}")
+
+    # Include data from relational tables
+    relational_tables = [
+        (models.friendslist, 'friendslist'),
+        (models.blocklist, 'blocklist'),
+        (models.userevents, 'userevents'),
+        (models.eventtags, 'eventtags'),
+        (models.usertags, 'usertags'),
+        (models.albumimage, 'albumimage')
+    ]
+
+    for table, table_name in relational_tables:
+        json_file_path = os.path.join(backup_directory_path, f"{table_name}.json")
+        print(f"Creating backup for {table_name}...")
+
+        try:
+            with open(json_file_path, 'w', encoding='utf-8') as json_file:
+                # Query all rows from the table
+                query = db.session.query(table).all()
+                
+                # Convert each row to a dictionary
+                serialized_data = []
+                for row in query:
+                    row_dict = {}
+                    for column in table.columns:
+                        row_dict[column.name] = getattr(row, column.name)
+                    serialized_data.append(row_dict)
+                    
+                # Convert date objects to string representation
+                for data in serialized_data:
+                    for key, value in data.items():
+                        if isinstance(value, date):
+                            data[key] = value.isoformat()  # Convert date to ISO string
+                
+                # Write the serialized data to the JSON file
+                json_file.write(json.dumps(serialized_data, indent=4))
+                
+                print(f"Backup for {table_name} created successfully.")
+        except Exception as e:
+            print(f"Error creating backup for {table_name}: {e}")
 
     print(f"Database backup created at {backup_directory_path}")
 

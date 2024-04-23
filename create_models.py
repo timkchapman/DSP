@@ -2,7 +2,28 @@ from LarpBook import create_app,db
 from config import Config
 from LarpBook.Models import models
 
-models = [models.User, models.UserWall, models.UserContact, models.UserPreferences, models.WallPost, models.Notification, models.Message, models.Conversation, models.ConversationParticipant, models.Venue, models.VenueWall, models.Event, models.EventWall, models.Receipt, models.Ticket]
+models = [models.User, 
+          models.UserWall, 
+          models.UserContact,
+          models.UserPreferences, 
+          models.WallPost, 
+          models.Notification,
+          models.Message, 
+          models.Conversation, 
+          models.ConversationParticipant,
+          models.Venue, 
+          models.VenueWall, 
+          models.Event, 
+          models.EventWall,
+          models.Receipt, 
+          models.Ticket, 
+          models.TicketType, 
+          models.Transaction,
+          models.PaymentMethod, 
+          models.Album, 
+          models.Image,
+          models.Tags
+          ]
 
 def main():
     app = create_app(Config)

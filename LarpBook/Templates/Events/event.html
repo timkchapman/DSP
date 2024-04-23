@@ -22,6 +22,16 @@
         margin-bottom: 20px;
     }
 
+    .tickets {
+        margin-bottom: 20px;
+        align-items: center;
+    }
+
+    .ticket-table {
+        width: 100%;
+        align-items: center;
+    }
+
     #map {
         height: 250px;
         width: 375px;
@@ -51,18 +61,63 @@
         {% endif %}
     </div>
 
+    <div class="dashboard">
+        {% if current_user.is_authenticated %}
+        {% if current_user.id == event.organiser_id %}
+        <a href="{{ url_for('events.event_dashboard', event_id=event.id) }}" class="btn btn-primary">Dashboard</a>
+        {% endif %}
+        {% endif %}
+    </div>
+
     <div class="description-container">
         <h2>Details:</h2>
         <p>{{ event.description }}</p>
     </div>
+    {% if tickets %}
+    {% set available_tickets = tickets|selectattr('available', 'equalto', true)|list %}
+    {% if available_tickets %}
+    <div class="tickets">
+        <h2>Tickets:</h2>
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Price</th>
+                    <th>Description</th>
+                    <th>Available?</th>
+                    <th>Buy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in available_tickets %}
+                <tr>
+                    <td>{{ ticket.name }}</td>
+                    <td>{{ ticket.price }}</td>
+                    <td>{{ ticket.description }}</td>
+                    <td>{% if ticket.max_tickets > ticket.tickets_sold %} Yes {% else %} Sold Out {% endif %}</td>
+                    <td>{% if ticket.max_tickets > ticket.tickets_sold %}<a
+                            href="{{ url_for('events.checkout', ticket_id=ticket.id) }}" class="btn btn-primary">Buy
+                            Now</a>{% else %} - {% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    {% endif %}
+
+
+
 
     <div class="venue-container">
         <div class="row">
             <div class="col-md-6">
                 <div class="address">
                     <h2>Address:</h2>
+                    <p>{{ venue.name }}</p>
                     <p>{{ address }}</p>
                 </div>
+
             </div>
             <div class="col-md-6">
                 <!-- Embed the map here -->

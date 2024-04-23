@@ -1,6 +1,10 @@
 from LarpBook.Models import models
 from LarpBook import db
 
+from LarpBook import create_app
+
+app = create_app()
+
 def set_authentication():
     users_to_authenticate = models.User.query.filter_by(is_authenticated=False).all()
 
@@ -12,4 +16,5 @@ def set_authentication():
     print('All users have been authenticated')
 
 if __name__ == '__main__':
-    set_authentication()
+    with app.app_context():
+        set_authentication()
