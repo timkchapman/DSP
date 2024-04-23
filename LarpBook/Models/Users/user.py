@@ -35,6 +35,7 @@ class User(db.Model, SerializerMixin):
 
   wall_posts = db.relationship('WallPost', backref = 'user', lazy = True)
   events = db.relationship('Event', secondary = userevents, backref = 'attendees')
+  tags = db.relationship('Tags', secondary = 'usertags', back_populates = 'users')
 
   idx_user_id = Index('idx_user_id', id)
 

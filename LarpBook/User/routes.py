@@ -1,8 +1,10 @@
-from flask import render_template
+from flask import render_template, url_for
 from LarpBook.User import bp
 from LarpBook import db
 from LarpBook.Models.models import User, Album, Image, Ticket, Event, UserContact, userevents, TicketType
 from LarpBook.Utils import authorisation, user_events
+import os
+import urllib.parse
 
 @bp.route('/')
 def index():
@@ -46,11 +48,16 @@ def user_page(id):
     ticket_details = []
     for ticket in tickets:
         ticket_type = TicketType.query.get(ticket.ticket_type_id)
+        event_name_cleaned = ticket_type.event.name.replace(' ', '_')
+        
+        ticket_location = url_for('static', filename=f'Tickets/{event_name_cleaned}/ticket_{ticket.id}.pdf')
+        print(ticket_location)
         ticket_details.append({
             'event_name': ticket_type.event.name,
             'ticket_type_name': ticket_type.name,
             'ticket_price': ticket_type.price,
-            'ticket_code': ticket.ticket_code
+            'ticket_code': ticket.ticket_code,
+            'ticket_location': ticket_location
         })
 
     return render_template('users/user.html', user=user, logged_in=logged_in, album=album,

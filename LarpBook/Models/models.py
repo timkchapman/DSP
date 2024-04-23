@@ -12,6 +12,9 @@ from .Miscelanious.receipt import Receipt
 from .Miscelanious.ticket import Ticket
 from .Miscelanious.tickettype import TicketType
 from .Miscelanious.transaction import Transaction
+from .Miscelanious.tags import Tags
+from .Miscelanious.usertags import usertags
+from .Miscelanious.eventtags import eventtags
 from .Messaging.message import Message
 from .Messaging.conversation import Conversation
 from .Messaging.participants import ConversationParticipant

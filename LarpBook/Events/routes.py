@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_paginate import Pagination
 from LarpBook.Events import bp
 from LarpBook.extensions import db
-from LarpBook.Models.models import Event, User, Venue, Album, Image, EventWall, VenueWall, TicketType, PaymentMethod, Ticket
+from LarpBook.Models.models import Event, User, Venue, Album, Image, EventWall, VenueWall, TicketType, Transaction, Ticket, Tags
 from LarpBook.Utils import geocode, authorisation
 from datetime import datetime
 from config import Config
@@ -12,15 +12,42 @@ from flask_login import current_user
 from reportlab.lib.pagesizes import A5
 from reportlab.pdfgen import canvas
 from reportlab.lib import fonts
+from sqlalchemy import func
 import os
 
 @bp.route('/')
 def index():
     logged_in = authorisation.is_user_logged_in()
     page = request.args.get('page', 1, type=int)
-    per_page = 4
+    per_page = 10
     
-    events = Event.query.all()
+    events_query = Event.query
+    events_query = events_query.outerjoin(TicketType)
+
+    tag_filter = request.args.get('tag')
+    tickets_filter = request.args.get('tickets')
+
+    # Filter events by tag
+    if tag_filter:
+        tag_filter = tag_filter.lower()
+        events_query = events_query.filter(Event.tags.any(tag=tag_filter))
+
+
+    # Filter events by ticket availability
+    if tickets_filter:
+        if tickets_filter == 'lt20':
+            events_query = events_query.filter(TicketType.max_tickets <= 20)
+        elif tickets_filter == 'lt50':
+            events_query = events_query.filter(TicketType.max_tickets <= 50)
+        elif tickets_filter == 'lt100':
+            events_query = events_query.filter(TicketType.max_tickets <= 100)
+        elif tickets_filter == 'lt500':
+            events_query = events_query.filter(TicketType.max_tickets <= 500)
+        elif tickets_filter == 'gt500':
+            events_query = events_query.filter(TicketType.max_tickets > 500)
+
+
+    events = events_query.all()
     
     organisers = User.query.filter(User.id.in_([event.organiser_id for event in events])).all()
     organiser_names = {organiser.id: organiser.username for organiser in organisers}
@@ -92,12 +119,7 @@ def create_event():
 
     if form.validate_on_submit():
         venue = Venue.query.filter_by(
-            name = form.venue.data,
-            address1 = form.address1.data,
-            address2 = form.address2.data,
-            city = form.city.data,
-            county = form.county.data,
-            postcode = form.postcode.data
+            name = form.venue.data
         ).first()
 
         if venue:
@@ -119,6 +141,19 @@ def create_event():
                 venue=new_venue.id
             )
             db.session.add(New_venue_wall)
+
+        event_tags = []
+        tag_names = [tag.strip().lower for tag in form.tags.data.split(',')]
+        for tag_name in tag_names:
+            existing_tag = Tags.query.filter_by(tag = tag_name).first()
+            
+            if not existing_tag:
+                new_tag = Tags(tag = tag_name)
+                db.session.add(new_tag)
+                db.session.commit()
+                event_tags.append(new_tag)
+            else:
+                event_tags.append(existing_tag)
         
         new_event = Event(
             organiser_id=current_user.id,
@@ -126,7 +161,8 @@ def create_event():
             description=form.description.data,
             start_date=form.start_date.data,
             end_date=form.end_date.data,
-            venue_id=venue_id
+            venue_id=venue_id,
+            tags = event_tags
         )
         db.session.add(new_event)
         db.session.commit()
@@ -144,8 +180,6 @@ def create_event():
         db.session.add(new_album)
         db.session.commit()
         album = Album.query.filter_by(event_id=new_event.id).first()
-        print(album.id)
-        print("Album Added")
 
         new_image = Image(
             name = 'Default',
@@ -155,9 +189,6 @@ def create_event():
         )
         db.session.add(new_image)
         db.session.commit()
-        image = Image.query.filter_by(album_id=new_album.id).first()
-        print(image.id)
-        print("Image Added")
 
         flash('Event created successfully', 'success')
         return redirect(url_for('events.index'))
@@ -188,6 +219,7 @@ def event_dashboard(event_id):
     
     return render_template('events/event_dashboard.html', logged_in = logged_in, event=event, tickets = tickets)
 
+
 # Route for editing event information
 @bp.route('/event_dashboard/<int:event_id>/edit', methods=['GET', 'POST'])
 @organiser_login_required
@@ -199,14 +231,94 @@ def edit_event(event_id):
         flash('You do not have permission to edit this event.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
 
+    # Fetch the associated venue for the event
+    venue = event.venue
+
+    tags = event.tags
+    tag_names = [tag.tag for tag in tags]
+    tag_string = ', '.join(tag_names)
+
     form = EventForm(obj=event)
+    
+    # Populate venue fields in the form
+    form.tags.data = tag_string
+    form.venue.data = venue.name
+    form.address1.data = venue.address1
+    form.address2.data = venue.address2
+    form.city.data = venue.city
+    form.county.data = venue.county
+    form.postcode.data = venue.postcode
+
     if form.validate_on_submit():
-        form.populate_obj(event)
+        # Check if venue with the given name already exists
+        venue = Venue.query.filter_by(
+            name=form.venue.data
+        ).first()
+
+        # If venue exists, use its id
+        if venue:
+            event.venue_id = venue.id
+        else:
+            # Otherwise, create a new venue and use its id
+            new_venue = Venue(
+                name=form.venue.data,
+                address1=form.address1.data,
+                address2=form.address2.data,
+                city=form.city.data,
+                county=form.county.data,
+                postcode=form.postcode.data
+            )
+            db.session.add(new_venue)
+            db.session.commit()
+            event.venue_id = new_venue.id
+
+        # Update event object with form data
+        event.name = form.name.data
+        event.description = form.description.data
+        event.start_date = form.start_date.data
+        event.end_date = form.end_date.data
+
+        # Split the tag string into individual tag names
+        tag_names = [tag.strip() for tag in form.tags.data.split(',')]
+
+        # Create or fetch existing tags and associate them with the event
+        event.tags.clear()  # Clear existing tags
+        for tag_name in tag_names:
+            # Check if the tag already exists
+            existing_tag = Tags.query.filter_by(tag=tag_name).first()
+            
+            if not existing_tag:
+                # If tag does not exist, create a new one
+                new_tag = Tags(tag=tag_name)
+                db.session.add(new_tag)
+                event.tags.append(new_tag)
+            else:
+                # If tag exists, use the existing one
+                event.tags.append(existing_tag)
+
         db.session.commit()
         flash('Event updated successfully', 'success')
-        return redirect(url_for('events.event_dashboard', logged_in = logged_in, event_id=event.id))
+        return redirect(url_for('events.event_dashboard', logged_in=logged_in, event_id=event.id))
+
     
     return render_template('events/edit_event.html', form=form, event=event)
+
+
+# Route for deleting an event
+@bp.route('/event_dashboard/<int:event_id>/delete', methods=['POST'])
+@organiser_login_required
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+
+    if event.organiser_id != current_user.id:
+        flash('You do not have permission to delete this event.', 'error')
+        return redirect(url_for('events.event_page', event_id=event.id))
+
+    db.session.delete(event)
+    db.session.commit()
+    flash('Event deleted successfully', 'success')
+    return redirect(url_for('events.index'))
+
 
 @bp.route('/event_dashboard/<int:event_id>/add_ticket', methods=['GET','POST'])
 @organiser_login_required
@@ -308,8 +420,9 @@ def checkout(ticket_id):
 @bp.route('/simulate_purchase/<int:ticket_id>/<result>', methods=['POST'])
 def simulate_purchase(ticket_id, result):
     logged_in = authorisation.is_user_logged_in()
+    ticket = TicketType.query.get_or_404(ticket_id)
     if result == 'success':
-        ticket = TicketType.query.get_or_404(ticket_id)
+        
         # Create the ticket for the user
         new_ticket = Ticket(
             event_id=ticket.event_id,
@@ -328,15 +441,39 @@ def simulate_purchase(ticket_id, result):
         # Generate a PDF ticket
         generate_ticket_pdf(new_ticket, event_name)
 
+        transaction = Transaction(
+            user_id = current_user.id,
+            event_id = ticket.event_id,
+            ticket_id = new_ticket.id,
+            total = ticket.price,
+            payment_status = True,
+            timestamp = datetime.now()
+        )
+        db.session.add(transaction)
+        db.session.commit()
+
         return redirect(url_for('events.event_page', logged_in = logged_in, event_id=ticket.event_id))
     elif result == 'failure':
         flash('Ticket purchase failed.', 'error')
+
+        # Log the failed transaction
+        transaction = Transaction(
+            user_id = current_user.id,
+            event_id = ticket.event_id,
+            ticket_id = ticket.id,
+            total = ticket.price,
+            payment_status = False,
+            timestamp = datetime.now()
+        )
+        db.session.add(transaction)
+        db.session.commit()
 
     return redirect(url_for('events.checkout', logged_in = logged_in, ticket_id=ticket_id))
 
 def generate_ticket_pdf(ticket, event_name):
 
-    event_dir = os.path.join('LarpBook', 'Static', 'Tickets', event_name)
+    event_name_cleaned = event_name.replace(' ', '_')  # Replace spaces with underscores
+    event_dir = os.path.join('LarpBook', 'Static', 'Tickets', event_name_cleaned)
     os.makedirs(event_dir, exist_ok=True)
 
 
@@ -347,5 +484,4 @@ def generate_ticket_pdf(ticket, event_name):
     c.rect(20, 20, 160, 210)
     c.line(20, 20, 180, 230)
     c.drawString(100, 500, f'Ticket for {ticket.event.name}')
-    print(f'Ticket for {ticket.event.name}')
     c.save()

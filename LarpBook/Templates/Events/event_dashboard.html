@@ -4,32 +4,59 @@
 
 {% block content %}
 <div class="container">
-    <h1>Event Dashboard</h1>
-    <h2><strong><a href="{{ url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></strong></h2>
-    <p>Description: {{ event.description }}</p>
-    <p>Start Date: {{ event.start_date }}</p>
-    <p>End Date: {{ event.end_date }}</p>
-    <h2>Tickets</h2>
-    {% if tickets %}
-    <ul>
-        {% for ticket in tickets %}
-        <li>{{ ticket.name }} - Price: £{{ ticket.price }} - Available? {{ ticket.available }}
-            <form action="{{ url_for('events.toggle_ticket_active', ticket_id=ticket.id) }}" method="post">
+    <div class="row">
+        <div class="col-md-6">
+            <h1>Event Dashboard</h1>
+            <h2><strong><a href="{{ url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></strong>
+            </h2>
+            <p>Description: {{ event.description }}</p>
+            <p>Start Date: {{ event.start_date }}</p>
+            <p>End Date: {{ event.end_date }}</p>
+            <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-secondary">Edit Event</a>
+            <form id="delete-form" action="{{ url_for('events.delete_event', event_id=event.id) }}" method="post">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-primary">
-                    {% if ticket.available %}
-                    Deactivate
-                    {% else %}
-                    Activate
-                    {% endif %}
-                </button>
+                <button type="submit" class="btn btn-danger">Delete Event</button>
             </form>
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>No tickets available for this event.</p>
-    {% endif %}
-    <a href="{{ url_for('events.add_tickets', event_id=event.id) }}" class="btn btn-primary">Add Tickets</a>
+        </div>
+        <div class="col-md-6">
+            <h2>Tickets</h2>
+            {% if tickets %}
+            <ul>
+                {% for ticket in tickets %}
+                <li>{{ ticket.name }} - Price: £{{ ticket.price }} - Available? {{ ticket.available }}
+                    <form action="{{ url_for('events.toggle_ticket_active', ticket_id=ticket.id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary">
+                            {% if ticket.available %}
+                            Deactivate
+                            {% else %}
+                            Activate
+                            {% endif %}
+                        </button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No tickets available for this event.</p>
+            {% endif %}
+            <a href="{{ url_for('events.add_tickets', event_id=event.id) }}" class="btn btn-primary">Add Tickets</a>
+        </div>
+    </div>
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    // JavaScript code to show confirmation box before form submission
+    document.getElementById("delete-form").addEventListener("submit", function (event) {
+        var confirmDelete = confirm("Are you sure you want to delete this event?");
+        if (!confirmDelete) {
+            event.preventDefault(); // Prevent form submission if user cancels
+        }
+    });
+</script>
+
 {% endblock %}

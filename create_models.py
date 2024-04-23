@@ -21,7 +21,8 @@ models = [models.User,
           models.Transaction,
           models.PaymentMethod, 
           models.Album, 
-          models.Image
+          models.Image,
+          models.Tags
           ]
 
 def main():

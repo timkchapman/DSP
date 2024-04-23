@@ -49,6 +49,42 @@ def restore_database():
                     print(f"Data for {model_name} restored successfully.")
             else:
                 print(f"No backup file found for {model_name}. Skipping...")
+
+        # Include relational tables that aren't classes
+        relational_tables = [
+            (models.friendslist, 'friendslist'),
+            (models.blocklist, 'blocklist'),
+            (models.userevents, 'userevents'),
+            (models.eventtags, 'eventtags'),
+            (models.usertags, 'usertags'),
+            (models.albumimage, 'albumimage')
+        ]
+
+        for table, table_name in relational_tables:
+            json_file_path = os.path.join(backup_directory_path, f"{table_name}.json")
+
+            if os.path.exists(json_file_path):
+                print(f"Found backup file for {table_name}. Restoring data...")
+                with open(json_file_path, 'r', encoding='utf-8') as json_file:
+                    serialized_data = json.load(json_file)
+                    # Delete existing records in the table
+                    db.session.query(table).delete()
+                    # Create or update records from the serialized data
+                    for data in serialized_data:
+                        # Convert date strings back to datetime.date objects
+                        for key, value in data.items():
+                            if isinstance(value, str) and value:
+                                try:
+                                    data[key] = datetime.fromisoformat(value).date()
+                                except ValueError:
+                                    pass  # Ignore if value is not a valid date string
+                        # Create new database record
+                        db.session.execute(table.insert().values(**data))
+                    db.session.commit()
+                    print(f"Data for {table_name} restored successfully.")
+            else:
+                print(f"No backup file found for {table_name}. Skipping...")
+                
     except Exception as e:
         print(f"Error restoring database: {e}")
 

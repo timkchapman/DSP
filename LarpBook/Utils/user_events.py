@@ -5,9 +5,7 @@ def user_has_events(user_id):
 
     if user_tickets:
         event_ids = [ticket.event_id for ticket in user_tickets]
-
-        user_events = Event.query.filter(Event.id.in_(event_ids)).all()
-
-        return user_events
+        user_events_query = Event.query.filter(Event.id.in_(event_ids))
+        return user_events_query
     else:
-        return None
+        return Event.query.filter_by(id=None)  # Return an empty query to avoid errors
