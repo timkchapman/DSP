@@ -9,8 +9,10 @@ from config import Config
 from LarpBook.Static.Forms.forms import EventForm, AddTicketForm, PaymentMethodForm, ChooseQuantityForm
 from LarpBook.Utils.authorisation import organiser_login_required
 from flask_login import current_user
-import stripe
-import json
+from reportlab.lib.pagesizes import A5
+from reportlab.pdfgen import canvas
+from reportlab.lib import fonts
+import os
 
 @bp.route('/')
 def index():
@@ -77,7 +79,7 @@ def event_page(event_id):
     else:
         lat, lng = None, None
 
-    tickets = TicketType.query.filter_by(event=event_id).all()
+    tickets = TicketType.query.filter_by(event_id=event_id).all()
     for ticket in tickets:
         print(ticket, ticket.available)
     return render_template('events/event.html', event=event, image = cover_image, organiser = organiser, address = address, venue = venue, lat = lat, lng = lng, logged_in=logged_in, tickets = tickets)
@@ -182,7 +184,7 @@ def event_dashboard(event_id):
         flash('You do not have permission to access this page.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
     
-    tickets = TicketType.query.filter_by(event=event_id).all()
+    tickets = TicketType.query.filter_by(event_id=event_id).all()
     
     return render_template('events/event_dashboard.html', logged_in = logged_in, event=event, tickets = tickets)
 
@@ -219,7 +221,7 @@ def add_tickets(event_id):
     if form.validate_on_submit():
         deposit_amount = form.deposit_amount.data if form.depositable.data else 0
         new_ticket = TicketType(
-            event=event_id,
+            event_id=event_id,
             name=form.name.data,
             price=form.price.data,
             description=form.description.data,
@@ -243,7 +245,7 @@ def edit_ticket(ticket_id):
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to edit this ticket.', 'error')
-        return redirect(url_for('events.event_page', event_id=event.id))
+        return redirect(url_for('events.event_page', logged_in = logged_in, event_id=event.id))
 
     form = AddTicketForm(obj=ticket)
     if form.validate_on_submit():
@@ -256,24 +258,26 @@ def edit_ticket(ticket_id):
 @bp.route('/event_dashboard/<int:ticket_id>/delete_ticket', methods=['GET', 'POST'])
 @organiser_login_required
 def delete_ticket(ticket_id):
+    logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
     event = Event.query.get_or_404(ticket.event)
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to delete this ticket.', 'error')
-        return redirect(url_for('events.event_page', event_id=event.id))
+        return redirect(url_for('events.event_page', logged_in = logged_in, event_id=event.id))
 
     db.session.delete(ticket)
     db.session.commit()
     flash('Ticket deleted successfully', 'success')
-    return redirect(url_for('events.event_page', event_id=event.id))
+    return redirect(url_for('events.event_page', logged_in = logged_in, event_id=event.id))
 
-@bp.route('/toggle_ticket_active/<int:ticket_id>', methods=['POST'])
+@bp.route('/toggle_ticket_active/<int:ticket_id>',  methods=['POST'])
 @organiser_login_required
 def toggle_ticket_active(ticket_id):
+    logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
 
-    if ticket.ticket_event.organiser_id != current_user.id:
+    if ticket.event.organiser_id != current_user.id:
         return jsonify({'error': 'You do not have permission to toggle this ticket'})
 
     # Toggle the available status of the ticket
@@ -281,31 +285,37 @@ def toggle_ticket_active(ticket_id):
     db.session.commit()
     flash('Ticket active status updated successfully', 'success')
 
-    return redirect(url_for('events.event_dashboard', event_id=ticket.event))
+    return redirect(url_for('events.event_dashboard', logged_in = logged_in, event_id=ticket.event.id))
 
 @bp.route('/checkout/<int:ticket_id>/', methods=['GET', 'POST'])
 def checkout(ticket_id):
+    logged_in = authorisation.is_user_logged_in()
+
+    if not logged_in:
+        flash('You must be logged in to purchase a ticket.', 'error')
+        return redirect(url_for('auth.login'))
+
     ticket = TicketType.query.get_or_404(ticket_id)
     if not ticket.available:
         flash('This ticket is not available for purchase.', 'error')
         return redirect(url_for('events.event_page', event_id=ticket.event))
 
-    event = Event.query.get(ticket.event)
+    event = Event.query.get(ticket.event_id)
     organiser = User.query.get(event.organiser_id)
 
-    return render_template('tickets/checkout.html', ticket=ticket, event=event, organiser=organiser)
+    return render_template('tickets/checkout.html', logged_in = logged_in, ticket=ticket, event=event, organiser=organiser)
 
 @bp.route('/simulate_purchase/<int:ticket_id>/<result>', methods=['POST'])
 def simulate_purchase(ticket_id, result):
+    logged_in = authorisation.is_user_logged_in()
     if result == 'success':
         ticket = TicketType.query.get_or_404(ticket_id)
         # Create the ticket for the user
         new_ticket = Ticket(
-            event_id=ticket.event,
+            event_id=ticket.event_id,
             user_id=current_user.id,
-            ticket_type=ticket.name,
-            ticket_price=ticket.price,
-            ticket_code=f'{current_user.id}-{ticket.event}-{ticket_id}'
+            ticket_type_id=ticket.id,
+            ticket_code=f'{current_user.id}-{ticket.event_id}-{ticket.id}-{ticket.tickets_sold + 1}'
         )
         db.session.add(new_ticket)
         db.session.commit()
@@ -313,8 +323,29 @@ def simulate_purchase(ticket_id, result):
         ticket.tickets_sold += 1
         db.session.commit()
         flash('Ticket purchased successfully.', 'success')
-        return redirect(url_for('events.event_page', event_id=ticket.event))
+        event_name = ticket.event.name
+
+        # Generate a PDF ticket
+        generate_ticket_pdf(new_ticket, event_name)
+
+        return redirect(url_for('events.event_page', logged_in = logged_in, event_id=ticket.event_id))
     elif result == 'failure':
         flash('Ticket purchase failed.', 'error')
 
-    return redirect(url_for('events.checkout', ticket_id=ticket_id))
+    return redirect(url_for('events.checkout', logged_in = logged_in, ticket_id=ticket_id))
+
+def generate_ticket_pdf(ticket, event_name):
+
+    event_dir = os.path.join('LarpBook', 'Static', 'Tickets', event_name)
+    os.makedirs(event_dir, exist_ok=True)
+
+
+    file_name = f'ticket_{ticket.id}.pdf'
+    save_path = os.path.join(event_dir, file_name)
+
+    c = canvas.Canvas(save_path, pagesize=A5)
+    c.rect(20, 20, 160, 210)
+    c.line(20, 20, 180, 230)
+    c.drawString(100, 500, f'Ticket for {ticket.event.name}')
+    print(f'Ticket for {ticket.event.name}')
+    c.save()

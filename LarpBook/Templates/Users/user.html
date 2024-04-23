@@ -94,11 +94,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for ticket in tickets %}
+                            {% for ticket_detail in ticket_details %}
                             <tr>
-                                <td>{{ ticket.event.name }}</td>
-                                <td>{{ ticket.ticket_type }}</td>
-                                <td>{{ ticket.ticket_price }}</td>
+                                <td>{{ ticket_detail.event_name }}</td>
+                                <td>{{ ticket_detail.ticket_type_name }}</td>
+                                <td>{{ ticket_detail.ticket_price }}</td>
+                                <td>{{ ticket_detail.ticket_code }}</td>
                                 {% endfor %}
                         </tbody>
                     </table>

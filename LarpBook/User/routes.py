@@ -1,7 +1,7 @@
 from flask import render_template
 from LarpBook.User import bp
 from LarpBook import db
-from LarpBook.Models.models import User, Album, Image, Ticket, Event, UserContact, userevents
+from LarpBook.Models.models import User, Album, Image, Ticket, Event, UserContact, userevents, TicketType
 from LarpBook.Utils import authorisation, user_events
 
 @bp.route('/')
@@ -36,18 +36,22 @@ def user_page(id):
     user = User.query.get_or_404(id)
 
     album = Album.query.filter_by(name='Default', user_id=user.id).first()
-    print(album.name)
-    if album:
-        cover_image = Image.query.filter_by(album_id=album.id).first()
-        if cover_image:
-            print(cover_image.location)
-    else:  
-        cover_image = None
-        print("Cover Image Not Found")
+    cover_image = Image.query.filter_by(album_id=album.id).first() if album else None
 
     events = user_events.user_has_events(user.id)
-    print(events)
 
     tickets = Ticket.query.filter_by(user_id=user.id).all()
-    
-    return render_template('users/user.html', user = user, logged_in=logged_in, album=album, image = cover_image, events = events, tickets = tickets)
+
+    # Fetch name and price from TicketType for each ticket
+    ticket_details = []
+    for ticket in tickets:
+        ticket_type = TicketType.query.get(ticket.ticket_type_id)
+        ticket_details.append({
+            'event_name': ticket_type.event.name,
+            'ticket_type_name': ticket_type.name,
+            'ticket_price': ticket_type.price,
+            'ticket_code': ticket.ticket_code
+        })
+
+    return render_template('users/user.html', user=user, logged_in=logged_in, album=album,
+                           image=cover_image, events=events, tickets=tickets, ticket_details=ticket_details)

@@ -13,6 +13,7 @@ class Event(db.Model, SerializerMixin):
     
     organiser = db.relationship('User', backref='organiser_events')
     venue = db.relationship('Venue', back_populates='events')
+    event_tickets = db.relationship('Ticket', back_populates='event')
 
     # Define indexes within the class definition
     idx_event_organiser_id = Index('idx_event_organiser_id', organiser_id)
