@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .title {
+        text-align: center;
+        margin: 0 auto;
+        max-width: 80vw;
+    }
+
+    .btn-group {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .btn-group .btn {
+        margin-right: 10px;
+    }
+</style>
+
+<div class="userwall">
+    <div class="title">
+        <h1>{{ event.name }}</h1>
+        <h2>An event by <a href="{{ url_for('user.organiser_page', id=event.organiser_id) }}">{{
+                organiser.username }}</a></h2>
+        {% if current_user.is_authenticated %}
+        {% if current_user.id == event.organiser_id %}
+        <div class="btn-group" role="group" aria-label="Switch between wall and dashboard">
+            <a href="{{ url_for('events.event_page', event_id=event.id) }}" class="btn btn-primary">Event Wall</a>
+            <a href="{{ url_for('events.event_dashboard', event_id=event.id) }}" class="btn btn-primary">Event
+                Dashboard</a>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+</div>
+{% block eventwall %}
+{% endblock %}
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+
+{% endblock %}

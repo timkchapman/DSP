@@ -1,10 +1,9 @@
-from flask import render_template, url_for
+from flask import render_template, url_for, flash, redirect, request, Blueprint
 from LarpBook.User import bp
 from LarpBook import db
 from LarpBook.Models.models import User, Album, Image, Ticket, Event, UserContact, userevents, TicketType
 from LarpBook.Utils import authorisation, user_events
-import os
-import urllib.parse
+
 
 @bp.route('/')
 def index():
@@ -60,5 +59,19 @@ def user_page(id):
             'ticket_location': ticket_location
         })
 
-    return render_template('users/user.html', user=user, logged_in=logged_in, album=album,
+    return render_template('users/userwall.html', user=user, logged_in=logged_in, album=album,
                            image=cover_image, events=events, tickets=tickets, ticket_details=ticket_details)
+
+# Route for the user dashboard
+@bp.route('/user_dashboard/<int:id>', methods=['GET', 'POST'])
+def user_dashboard(id):
+    logged_in = authorisation.is_user_logged_in()
+    user = User.query.get_or_404(id)
+
+    user_contact = UserContact.query.filter_by(user=user.id).all()
+
+    if user.id != id:
+        flash('You do not have permission to access this page.', 'error')
+        return redirect(url_for('users.user_page', user_id=user.id))
+    
+    return render_template('users/user_dashboard.html', logged_in=logged_in, user=user, contacts = user_contact)

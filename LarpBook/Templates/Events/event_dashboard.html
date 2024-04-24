@@ -1,14 +1,12 @@
-{% extends "base.html" %}
+{% extends "event.html" %}
 
 {% block title %}Event Dashboard{% endblock %}
 
-{% block content %}
+{% block eventwall %}
 <div class="container">
     <div class="row">
         <div class="col-md-6">
-            <h1>Event Dashboard</h1>
-            <h2><strong><a href="{{ url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></strong>
-            </h2>
+            <h2>Event Details</h2>
             <p>Description: {{ event.description }}</p>
             <p>Start Date: {{ event.start_date }}</p>
             <p>End Date: {{ event.end_date }}</p>

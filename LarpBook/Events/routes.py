@@ -98,7 +98,12 @@ def event_page(event_id):
 
     venue = event.venue_id
     venue = Venue.query.get(venue)
-    address = ", ".join(filter(None, [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]))
+    if venue is not None:
+        address_parts = [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]
+        address = ", ".join(filter(None, address_parts))
+    else:
+        address = "Unknown"
+
     geocode_address = address.replace(",", " ")
     latlng = geocode.geocode(geocode_address)
     if latlng and len(latlng) == 2:
@@ -109,7 +114,7 @@ def event_page(event_id):
     tickets = TicketType.query.filter_by(event_id=event_id).all()
     for ticket in tickets:
         print(ticket, ticket.available)
-    return render_template('events/event.html', event=event, image = cover_image, organiser = organiser, address = address, venue = venue, lat = lat, lng = lng, logged_in=logged_in, tickets = tickets)
+    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, venue = venue, lat = lat, lng = lng, logged_in=logged_in, tickets = tickets)
 
 @bp.route('/create/', methods=['GET', 'POST'])
 @organiser_login_required
@@ -215,9 +220,10 @@ def event_dashboard(event_id):
         flash('You do not have permission to access this page.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
     
+    organiser = User.query.get(event.organiser_id)
     tickets = TicketType.query.filter_by(event_id=event_id).all()
     
-    return render_template('events/event_dashboard.html', logged_in = logged_in, event=event, tickets = tickets)
+    return render_template('events/event_dashboard.html', logged_in = logged_in, organiser = organiser, event=event, tickets = tickets)
 
 
 # Route for editing event information

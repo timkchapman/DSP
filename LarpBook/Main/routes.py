@@ -38,7 +38,12 @@ def index():
         # Use event ID as the key
         organiser_name = organiser_names.get(event.organiser_id)
         venue = venue_dict.get(event.venue_id)
-        address = ", ".join(filter(None, [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]))
+        if venue is not None:
+            address_parts = [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]
+            address = ", ".join(filter(None, address_parts))
+        else:
+            address = "Unknown"
+
         combined_latest.append((event, organiser_name, address))
 
     combined_soonest = []

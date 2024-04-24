@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .title {
+        text-align: center;
+        margin: 0 auto;
+        max-width: 80vw;
+    }
+
+    .btn-group {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .btn-group .btn {
+        margin-right: 10px;
+    }
+</style>
+
+<div class="userwall">
+    <div class="title">
+        <h1>{{ user.username}}</h1>
+        {% if current_user.is_authenticated %}
+        {% if current_user and current_user.id == user.id %}
+        <div class="btn-group" role="group" aria-label="Switch between wall and dashboard">
+            <a href="{{ url_for('user.user_page', id=user.id) }}" class="btn btn-primary">User Wall</a>
+            <a href="{{ url_for('user.user_dashboard', id=user.id) }}" class="btn btn-primary">User Dashboard</a>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    {% block userwall %}
+    {% endblock %}
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+
+{% endblock %}

@@ -1,0 +1,35 @@
+<!-- users/user_dashboard.html -->
+
+{% extends 'user.html' %}
+
+{% block userwall %}
+<style>
+    .user-info {
+        margin: 20px auto;
+        max-width: 80%;
+    }
+
+    .contact-info {
+        margin-top: 20px;
+    }
+</style>
+
+<div class="user-info">
+    <h2>Details:</h2>
+    <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+    <p><strong>Date Joined:</strong> {{ user.date_joined }}</p>
+    <p><strong>Birth Date:</strong> {{ user.birth_date }}</p>
+    <p><strong>About:</strong> {{ user.about }}</p>
+
+    <div class="contact-info">
+        <h2>Contact Information</h2>
+        <ul>
+            {% for contact in contacts %}
+            <li><strong>{{ contact.contact_type }}:</strong> {{ contact.contact_value }} {% if contact.description %}({{
+                contact.description }}){% endif %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

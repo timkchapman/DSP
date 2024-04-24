@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'user.html' %}
 
-{% block content %}
+{% block userwall %}
 <style>
     .container {
         text-align: center;
@@ -22,10 +22,6 @@
 </style>
 
 <div class="container">
-    <div class="title">
-        <h1>{{ user.username}}</h1>
-    </div>
-
     <div class="cover-image-container">
         {% if image %}
         <img src="{{ url_for('static', filename=image.location) }}" class="cover-image" alt="{{ user.name }}">

@@ -104,6 +104,11 @@
 
     <!-- Menu -->
     <div id="menu">
+        <br>
+        <br>
+        {% if logged_in %}
+        <p style="font-weight: bold;">Welcome {{ current_user.username }}</p>
+        {% endif %}
         <a href="{{ url_for('main.index') }}">Home</a>
         {% if logged_in %}
         {% if current_user.is_organiser %}

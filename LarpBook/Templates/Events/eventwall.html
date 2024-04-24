@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'event.html' %}
 
-{% block content %}
+{% block eventwall %}
 <style>
     .container {
         text-align: center;
@@ -42,12 +42,6 @@
 </style>
 
 <div class="container">
-    <div class="title">
-        <h1>{{ event.name }}</h1>
-        <h2>An event by <a href="{{ url_for('user.organiser_page', id=event.organiser_id) }}">{{
-                organiser.username }}</a></h2>
-    </div>
-
     <div class="date-container">
         <h2>Running: {{ event.start_date }} to {{ event.end_date }}</h2>
     </div>
