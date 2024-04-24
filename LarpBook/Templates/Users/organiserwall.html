@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'user.html' %}
 
-{% block content %}
+{% block userwall %}
 <style>
     .container {
         text-align: center;
@@ -23,13 +23,13 @@
 
 <div class="container">
     <div class="title">
-        <h1>{{ organiser.name }}</h1>
+        <h1>{{ user.name }}</h1>
     </div>
 
 
     <div class="cover-image-container">
         {% if image %}
-        <img src="{{ url_for('static', filename=image.location) }}" class="cover-image" alt="{{ organiser.name }}">
+        <img src="{{ url_for('static', filename=image.location) }}" class="cover-image" alt="{{ user.name }}">
         {% else %}
         <!-- Handle case where no cover image is available -->
         <p>No cover image available</p>
@@ -41,7 +41,7 @@
             <div class="col-md-6">
                 <div class="about-container">
                     <h2>About:</h2>
-                    <p>{{ organiser.about }}</p>
+                    <p>{{ user.about }}</p>
                 </div>
 
                 <div class="contact-container">
@@ -51,7 +51,7 @@
                     <p>{{ contact.contact_value }}</p>
                     {% endfor %}
                     <p>Website:</p>
-                    <p><a href="{{ organiser.website }}">{{ organiser.website }}</a></p>
+                    <p><a href="{{ user.website }}">{{ user.website }}</a></p>
                 </div>
             </div>
             <div class="col-md-6">

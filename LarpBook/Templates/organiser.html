@@ -30,14 +30,13 @@
         </div>
         {% else %}
         <div class="btn-group" role="group" aria-label="Switch between wall and dashboard">
-            <a href="{{ url_for('user.organiser_page', id=user.id) }}" class="btn btn-primary">Organiser Wall</a>
-            <a href="{{ url_for('user.organiser_dashboard', id=user.id) }}" class="btn btn-primary">Organiser
-                Dashboard</a>
+            <a href="{{ url_for('user.organiser_page', id=user.id) }}" class="btn btn-primary">User Wall</a>
+            <a href="{{ url_for('user.organiser_dashboard', id=user.id) }}" class="btn btn-primary">User Dashboard</a>
         </div>
         {% endif %}
         {% endif %}
-        {% endif %}
     </div>
+
     {% block userwall %}
     {% endblock %}
 </div>

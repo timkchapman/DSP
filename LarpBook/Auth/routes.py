@@ -49,7 +49,8 @@ def register():
             # Check if the interest tags already exist
             user_tags = []
             tag_names = [tag.strip().lower for tag in form.tags.data.split(',')]
-            for tag_name in tag_names:
+            unique_tags = set(tag_names)
+            for tag_name in unique_tags:
                 existing_tag = Tags.query.filter_by(tag = tag_name).first()
                 
                 # If the tag does not exist, create a new tag object

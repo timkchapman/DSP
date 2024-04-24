@@ -55,14 +55,6 @@
         {% endif %}
     </div>
 
-    <div class="dashboard">
-        {% if current_user.is_authenticated %}
-        {% if current_user.id == event.organiser_id %}
-        <a href="{{ url_for('events.event_dashboard', event_id=event.id) }}" class="btn btn-primary">Dashboard</a>
-        {% endif %}
-        {% endif %}
-    </div>
-
     <div class="description-container">
         <h2>Details:</h2>
         <p>{{ event.description }}</p>
@@ -108,7 +100,7 @@
             <div class="col-md-6">
                 <div class="address">
                     <h2>Address:</h2>
-                    <p>{{ venue.name }}</p>
+                    <p><strong>{{ venue.name }}</strong></p>
                     <p>{{ address }}</p>
                 </div>
 

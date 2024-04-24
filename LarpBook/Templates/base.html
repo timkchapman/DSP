@@ -77,6 +77,7 @@
             height: calc(100vh- 150px);
             margin-top: 50px;
             padding: 20px;
+            margin-bottom: 20px;
 
         }
 
@@ -93,7 +94,9 @@
 
 <body>
     <!-- Title -->
-    <h1 class="global-title">LarpBook</h1>
+    <h1 class="global-title">
+        <a href="{{ url_for('main.index') }}">LarpBook</a>
+    </h1>
 
     <!-- Hamburger Button -->
     <div id="menu-toggle">
@@ -107,7 +110,9 @@
         <br>
         <br>
         {% if logged_in %}
-        <p style="font-weight: bold;">Welcome {{ current_user.username }}</p>
+        <p><strong>Welcome: </strong><br>
+            <strong>{{ current_user.username }}</strong>
+        </p>
         {% endif %}
         <a href="{{ url_for('main.index') }}">Home</a>
         {% if logged_in %}
