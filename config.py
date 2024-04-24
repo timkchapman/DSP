@@ -1,5 +1,6 @@
 import os
 import configparser
+from datetime import timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 config_file_path = os.path.join(basedir, 'configuration.ini')
@@ -16,6 +17,7 @@ class Config:
 	STATIC_URL_PATH = 'LarpBook/static'
 	SESSION_TYPE = 'filesystem'
 	SESSION_COOKIE_SAMESITE = 'Lax'
+	PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
 
 	WTF_CSRF_ENABLED = True
 

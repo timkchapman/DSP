@@ -1,19 +1,28 @@
-{% extends "base.html" %}
+{% extends "event.html" %}
 
 {% block title %}Event Dashboard{% endblock %}
 
-{% block content %}
+{% block eventwall %}
 <div class="container">
     <div class="row">
         <div class="col-md-6">
-            <h1>Event Dashboard</h1>
-            <h2><strong><a href="{{ url_for('events.event_page', event_id=event.id) }}">{{ event.name }}</a></strong>
-            </h2>
+            <h2>Event Details</h2>
             <p>Description: {{ event.description }}</p>
             <p>Start Date: {{ event.start_date }}</p>
             <p>End Date: {{ event.end_date }}</p>
-            <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-secondary">Edit Event</a>
-            <form id="delete-form" action="{{ url_for('events.delete_event', event_id=event.id) }}" method="post">
+            <p><strong>Tags:</strong> {% for tag in event.tags %}{{ tag.tag }}, {% endfor %}</p>
+
+            <!-- Button to trigger Edit Event Modal -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editEventModal">Edit
+                Event</button>
+
+            <!-- Button to trigger Edit Venue Modal -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editVenueModal">Edit
+                Venue</button>
+
+
+            <!-- Delete Event Form -->
+            <form id="delete-event-form" action="{{ url_for('events.delete_event', event_id=event.id) }}" method="post">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-danger">Delete Event</button>
             </form>
@@ -21,9 +30,12 @@
         <div class="col-md-6">
             <h2>Tickets</h2>
             {% if tickets %}
-            <ul>
-                {% for ticket in tickets %}
-                <li>{{ ticket.name }} - Price: £{{ ticket.price }} - Available? {{ ticket.available }}
+            {% for ticket in tickets %}
+            <p><strong>{{ ticket.name }} </strong></p>
+            <p> Available?: {% if ticket.available %} Yes {% else %} No {% endif %}</p>
+            <div class="alter-ticket row">
+                <!-- Toggle Ticket Active Button -->
+                <div class="col-md-4">
                     <form action="{{ url_for('events.toggle_ticket_active', ticket_id=ticket.id) }}" method="post">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-primary">
@@ -34,29 +46,350 @@
                             {% endif %}
                         </button>
                     </form>
-                </li>
-                {% endfor %}
-            </ul>
+                </div>
+
+                <!-- Edit Ticket Button -->
+                <div class="col-md-4">
+                    <form id="edit-ticket-form-{{ ticket.id }}"
+                        action="{{ url_for('events.edit_ticket', ticket_id=ticket.id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="btn btn-primary" data-toggle="modal"
+                            data-target="#editTicketModal-{{ ticket.id }}">Edit Ticket</button>
+                    </form>
+                </div>
+
+                <!-- Delete Ticket Form -->
+                <div class="col-md-4">
+                    <form id="delete-ticket-form-{{ ticket.id }}"
+                        action="{{ url_for('events.delete_ticket', ticket_id=ticket.id) }}" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger">Delete Ticket</button>
+                    </form>
+                </div>
+            </div>
+
+
+            <!-- Edit Ticket Modal -->
+            <div class="modal fade" id="editTicketModal-{{ ticket.id }}" tabindex="-1" role="dialog"
+                aria-labelledby="editTicketModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editTicketModalLabel">Edit Ticket</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- EditTicketForm with prefilled data -->
+                            <form id="editTicketForm" method="POST"
+                                action="{{ url_for('events.edit_ticket', ticket_id=ticket.id) }}">
+                                {{ edit_tickets_form.hidden_tag() }}
+                                <!-- Form fields -->
+                                <!-- Name -->
+                                <div class="form-group">
+                                    {{ edit_tickets_form.name.label(class="form-control-label") }}
+                                    {{ edit_tickets_form.name(class="form-control", value=ticket.name) }}
+                                    {% for error in edit_tickets_form.name.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                <!-- Price -->
+                                <div class="form-group">
+                                    {{ edit_tickets_form.price.label(class="form-control-label") }}
+                                    {{ edit_tickets_form.price(class="form-control", value=ticket.price) }}
+                                    {% for error in edit_tickets_form.price.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                <!-- Description -->
+                                <div class="form-group">
+                                    {{ edit_tickets_form.description.label(class="form-control-label") }}
+                                    {{ edit_tickets_form.description(class="form-control", value=ticket.description) }}
+                                    {% for error in edit_tickets_form.description.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                <!-- Depositable -->
+                                <div class="form-group">
+                                    <div class="form-check">
+                                        {{ edit_tickets_form.depositable(class="form-check-input", id="depositable",
+                                        checked=ticket.depositable) }}
+                                        {{ edit_tickets_form.depositable.label(class="form-check-label",
+                                        for="depositable") }}
+                                    </div>
+                                    {% for error in edit_tickets_form.depositable.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                <!-- Deposit Amount -->
+                                <div class="form-group" id="depositAmountField" style="display: none;">
+                                    {{ edit_tickets_form.deposit_amount.label(class="form-control-label") }}
+                                    {{ edit_tickets_form.deposit_amount(class="form-control", value =
+                                    ticket.deposit_amount) }}
+                                    {% for error in edit_tickets_form.deposit_amount.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                <!-- Max Tickets -->
+                                <div class="form-group">
+                                    {{ edit_tickets_form.max_tickets.label(class="form-control-label") }}
+                                    {{ edit_tickets_form.max_tickets(class="form-control", value=ticket.max_tickets) }}
+                                    {% for error in edit_tickets_form.max_tickets.errors %}
+                                    <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
             {% else %}
             <p>No tickets available for this event.</p>
             {% endif %}
-            <a href="{{ url_for('events.add_tickets', event_id=event.id) }}" class="btn btn-primary">Add Tickets</a>
+            <div class="ticket-buttons">
+                <div class="row">
+                    <a href="{{ url_for('events.add_tickets', event_id=event.id) }}" class="btn btn-primary">Add
+                        Tickets</a>
+                    <button type="button" class="btn btn-primary mt-3" id="viewTicketBtn" data-toggle="modal"
+                        data-target="#ticketModal">
+                        View Ticket
+                    </button>
+                </div>
+            </div>
         </div>
+
+        <!-- Edit Event Modal -->
+        <div class="modal fade" id="editEventModal" tabindex="-1" role="dialog" aria-labelledby="editEventModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editEventModalLabel">Edit Event</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- EditEventForm with prefilled data -->
+                        <form method="POST" action="{{ url_for('events.edit_event', event_id=event.id) }}">
+                            {{ edit_event_form.hidden_tag() }}
+                            <!-- Name -->
+                            <div class="form-group">
+                                {{ edit_event_form.name.label(class="form-control-label") }}
+                                {{ edit_event_form.name(class="form-control", value=event.name) }}
+                                {% for error in edit_event_form.name.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            <!-- Description -->
+                            <div class="form-group">
+                                {{ edit_event_form.description.label(class="form-control-label") }}
+                                {{ edit_event_form.description(class="form-control", id="description",
+                                value=event.description) }}
+                                {% for error in edit_event_form.description.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            <!-- Start Date -->
+                            <div class="form-group">
+                                {{ edit_event_form.start_date.label(class="form-control-label") }}
+                                {{ edit_event_form.start_date(class="form-control", id="start_date",
+                                value=event.start_date) }}
+                                {% for error in edit_event_form.start_date.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            <!-- End Date -->
+                            <div class="form-group">
+                                {{ edit_event_form.end_date.label(class="form-control-label") }}
+                                {{ edit_event_form.end_date(class="form-control", id="end_date", value=event.end_date)
+                                }}
+                                {% for error in edit_event_form.end_date.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            <!-- Tags -->
+                            <div class="form-group">
+                                {{ edit_event_form.tags.label(class="form-control-label") }}
+                                {{ edit_event_form.tags(class="form-control", value=tags) }}
+                                {% for error in edit_event_form.tags.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Ticket Modal -->
+        <div class="modal fade" id="ticketModal" tabindex="-1" role="dialog" aria-labelledby="ticketModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ticketModalLabel">Select Ticket</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="ticketSelect">Select a Ticket:</label>
+                        <select class="form-control" id="ticketSelect">
+                            {% for ticket in tickets %}
+                            <option value="{{ ticket.id }}">{{ ticket.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div id="ticketInfo"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="viewTicket()">View Ticket Info</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Venue Modal -->
+        <div class="modal fade" id="editVenueModal" tabindex="-1" role="dialog" aria-labelledby="editVenueModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editVenueModalLabel">Edit Venue</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Venue Edit Form -->
+                        <form method="POST" action="{{ url_for('events.edit_venue', venue_id=venue.id) }}">
+                            {{ edit_venue_form.hidden_tag() }}
+                            <!-- Venue Name -->
+                            <div class="form-group">
+                                {{ edit_venue_form.venue.label(class="form-control-label") }}
+                                {{ edit_venue_form.venue(class="form-control", value=venue.name) }}
+                            </div>
+                            <!-- Address Line 1 -->
+                            <div class="form-group">
+                                {{ edit_venue_form.address1.label(class="form-control-label") }}
+                                {{ edit_venue_form.address1(class="form-control", value=venue.address1) }}
+                            </div>
+                            <!-- Address Line 2 -->
+                            <div class="form-group">
+                                {{ edit_venue_form.address2.label(class="form-control-label") }}
+                                {{ edit_venue_form.address2(class="form-control", value=venue.address2) }}
+                            </div>
+                            <!-- City -->
+                            <div class="form-group">
+                                {{ edit_venue_form.city.label(class="form-control-label") }}
+                                {{ edit_venue_form.city(class="form-control", value=venue.city) }}
+                            </div>
+                            <!-- County -->
+                            <div class="form-group">
+                                {{ edit_venue_form.county.label(class="form-control-label") }}
+                                {{ edit_venue_form.county(class="form-control", value=venue.county) }}
+                            </div>
+                            <!-- Postcode -->
+                            <div class="form-group">
+                                {{ edit_venue_form.postcode.label(class="form-control-label") }}
+                                {{ edit_venue_form.postcode(class="form-control", value=venue.postcode) }}
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
 
-{% endblock %}
+    {% endblock %}
 
-{% block scripts %}
-
-<script>
-    // JavaScript code to show confirmation box before form submission
-    document.getElementById("delete-form").addEventListener("submit", function (event) {
-        var confirmDelete = confirm("Are you sure you want to delete this event?");
-        if (!confirmDelete) {
-            event.preventDefault(); // Prevent form submission if user cancels
+    {% block scripts %}
+    <script>
+        function viewTicket() {
+            var ticketId = document.getElementById("ticketSelect").value;
+            // Make AJAX request to fetch ticket info
+            fetch(`/events/view_ticket/${ticketId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Check if the element exists
+                    var ticketInfoElement = document.getElementById("ticketInfo");
+                    if (ticketInfoElement) {
+                        // Populate modal with ticket info
+                        ticketInfoElement.innerHTML = `
+                    <p>Event Name: ${data.event_name}</p>
+                    <p>Ticket Name: ${data.ticket_name}</p>
+                    <p>Description: ${data.description}</p>
+                    <p>Depositable: ${data.depositable}</p>
+                    <p>Deposit Amount: ${data.deposit_amount}</p>
+                    <p>Price: ${data.price}</p>
+                    <p>Max Tickets: ${data.max_tickets}</p>
+                    <p>Tickets Sold: ${data.tickets_sold}</p>
+                `;
+                        // Open the modal
+                        $('#ticketModal').modal('show');
+                    } else {
+                        console.error('Ticket info element not found.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         }
-    });
-</script>
 
-{% endblock %}
+    </script>
+
+    <script>
+        // JavaScript code to toggle visibility of deposit amount field based on initial checkbox state
+        window.addEventListener('DOMContentLoaded', function () {
+            var depositableCheckbox = document.getElementById("depositable");
+            var depositAmountField = document.getElementById("depositAmountField");
+
+            // Check the initial state of the checkbox
+            if (depositableCheckbox.checked) {
+                depositAmountField.style.display = "block";
+            } else {
+                depositAmountField.style.display = "none";
+            }
+
+            // Add event listener to toggle visibility when the checkbox state changes
+            depositableCheckbox.addEventListener("change", function () {
+                if (this.checked) {
+                    depositAmountField.style.display = "block";
+                } else {
+                    depositAmountField.style.display = "none";
+                }
+            });
+        });
+    </script>
+
+    <script>
+        // JavaScript code to show confirmation box before form submission
+        document.getElementById("delete-event-form").addEventListener("submit", function (event) {
+            var confirmDelete = confirm("Are you sure you want to delete this event?");
+            if (!confirmDelete) {
+                event.preventDefault(); // Prevent form submission if user cancels
+            }
+        });
+    </script>
+
+    <script>
+        // JavaScript code to show confirmation box before form submission
+        document.querySelectorAll("[id^='delete-ticket-form']").forEach(function (form) {
+            edit_event_form.addEventListener("submit", function (event) {
+                var confirmDelete = confirm("Are you sure you want to delete this ticket?");
+                if (!confirmDelete) {
+                    event.preventDefault(); // Prevent form submission if user cancels
+                }
+            });
+        });
+
+
+    </script>
+
+    {% endblock %}

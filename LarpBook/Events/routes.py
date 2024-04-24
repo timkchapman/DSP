@@ -5,13 +5,11 @@ from LarpBook.extensions import db
 from LarpBook.Models.models import Event, User, Venue, Album, Image, EventWall, VenueWall, TicketType, Transaction, Ticket, Tags
 from LarpBook.Utils import geocode, authorisation
 from datetime import datetime
-from config import Config
-from LarpBook.Static.Forms.forms import EventForm, AddTicketForm, PaymentMethodForm, ChooseQuantityForm
+from LarpBook.Static.Forms.forms import EventForm, EditEventForm, AddTicketForm, EditTagsForm, EditVenueForm
 from LarpBook.Utils.authorisation import organiser_login_required
 from flask_login import current_user
 from reportlab.lib.pagesizes import A5
 from reportlab.pdfgen import canvas
-from reportlab.lib import fonts
 from sqlalchemy import func
 import os
 
@@ -98,7 +96,12 @@ def event_page(event_id):
 
     venue = event.venue_id
     venue = Venue.query.get(venue)
-    address = ", ".join(filter(None, [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]))
+    if venue is not None:
+        address_parts = [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]
+        address = ", ".join(filter(None, address_parts))
+    else:
+        address = "Unknown"
+
     geocode_address = address.replace(",", " ")
     latlng = geocode.geocode(geocode_address)
     if latlng and len(latlng) == 2:
@@ -109,7 +112,7 @@ def event_page(event_id):
     tickets = TicketType.query.filter_by(event_id=event_id).all()
     for ticket in tickets:
         print(ticket, ticket.available)
-    return render_template('events/event.html', event=event, image = cover_image, organiser = organiser, address = address, venue = venue, lat = lat, lng = lng, logged_in=logged_in, tickets = tickets)
+    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, venue = venue, lat = lat, lng = lng, logged_in=logged_in, tickets = tickets)
 
 @bp.route('/create/', methods=['GET', 'POST'])
 @organiser_login_required
@@ -144,7 +147,9 @@ def create_event():
 
         event_tags = []
         tag_names = [tag.strip().lower for tag in form.tags.data.split(',')]
-        for tag_name in tag_names:
+        unique_tags = set(tag_names)
+
+        for tag_name in unique_tags:
             existing_tag = Tags.query.filter_by(tag = tag_name).first()
             
             if not existing_tag:
@@ -215,13 +220,28 @@ def event_dashboard(event_id):
         flash('You do not have permission to access this page.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
     
+    organiser = User.query.get(event.organiser_id)
     tickets = TicketType.query.filter_by(event_id=event_id).all()
-    
-    return render_template('events/event_dashboard.html', logged_in = logged_in, event=event, tickets = tickets)
+    venue = Venue.query.get(event.venue_id)
 
+    edit_venue_form = EditVenueForm()
+    edit_event_form = EditEventForm()
+    edit_tickets_form = AddTicketForm()
+    existing_tags = [tag.tag for tag in event.tags]
+    existing_tag_string = ', '.join(existing_tags)
 
-# Route for editing event information
-@bp.route('/event_dashboard/<int:event_id>/edit', methods=['GET', 'POST'])
+    return render_template('events/event_dashboard.html', 
+                            logged_in = logged_in, 
+                            organiser = organiser, 
+                            event=event, 
+                            venue = venue,
+                            tickets = tickets, 
+                            tags = existing_tag_string,
+                            edit_event_form=edit_event_form,
+                            edit_tickets_form=edit_tickets_form,
+                            edit_venue_form=edit_venue_form)
+
+@bp.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
 @organiser_login_required
 def edit_event(event_id):
     logged_in = authorisation.is_user_logged_in()
@@ -231,59 +251,22 @@ def edit_event(event_id):
         flash('You do not have permission to edit this event.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
 
-    # Fetch the associated venue for the event
-    venue = event.venue
-
-    tags = event.tags
-    tag_names = [tag.tag for tag in tags]
-    tag_string = ', '.join(tag_names)
-
-    form = EventForm(obj=event)
-    
-    # Populate venue fields in the form
-    form.tags.data = tag_string
-    form.venue.data = venue.name
-    form.address1.data = venue.address1
-    form.address2.data = venue.address2
-    form.city.data = venue.city
-    form.county.data = venue.county
-    form.postcode.data = venue.postcode
+    form = EditEventForm(obj=event)
 
     if form.validate_on_submit():
-        # Check if venue with the given name already exists
-        venue = Venue.query.filter_by(
-            name=form.venue.data
-        ).first()
-
-        # If venue exists, use its id
-        if venue:
-            event.venue_id = venue.id
-        else:
-            # Otherwise, create a new venue and use its id
-            new_venue = Venue(
-                name=form.venue.data,
-                address1=form.address1.data,
-                address2=form.address2.data,
-                city=form.city.data,
-                county=form.county.data,
-                postcode=form.postcode.data
-            )
-            db.session.add(new_venue)
-            db.session.commit()
-            event.venue_id = new_venue.id
-
-        # Update event object with form data
         event.name = form.name.data
         event.description = form.description.data
         event.start_date = form.start_date.data
         event.end_date = form.end_date.data
 
         # Split the tag string into individual tag names
-        tag_names = [tag.strip() for tag in form.tags.data.split(',')]
+        tag_names = [tag.strip().lower() for tag in form.tags.data.split(',')]
+        
+        unique_tags = set(tag_names)
 
-        # Create or fetch existing tags and associate them with the event
+       # Create or fetch existing tags and associate them with the event
         event.tags.clear()  # Clear existing tags
-        for tag_name in tag_names:
+        for tag_name in unique_tags:
             # Check if the tag already exists
             existing_tag = Tags.query.filter_by(tag=tag_name).first()
             
@@ -295,14 +278,11 @@ def edit_event(event_id):
             else:
                 # If tag exists, use the existing one
                 event.tags.append(existing_tag)
-
         db.session.commit()
         flash('Event updated successfully', 'success')
-        return redirect(url_for('events.event_dashboard', logged_in=logged_in, event_id=event.id))
+        return redirect(url_for('events.event_dashboard', event_id=event.id))
 
-    
-    return render_template('events/edit_event.html', form=form, event=event)
-
+    return render_template('edit_event.html', logged_in=logged_in, form=form, event=event)
 
 # Route for deleting an event
 @bp.route('/event_dashboard/<int:event_id>/delete', methods=['POST'])
@@ -314,10 +294,41 @@ def delete_event(event_id):
         flash('You do not have permission to delete this event.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
 
+
     db.session.delete(event)
     db.session.commit()
     flash('Event deleted successfully', 'success')
     return redirect(url_for('events.index'))
+
+# Define route for editing venue
+@bp.route('/edit_venue/<int:venue_id>', methods=['GET', 'POST'])
+@organiser_login_required
+def edit_venue(venue_id):
+    # Fetch venue from database
+    venue = Venue.query.get_or_404(venue_id)
+
+    # Create form and populate it with existing venue data
+    form = EditVenueForm(obj=venue)
+
+    # Handle form submission
+    if form.validate_on_submit():
+        # Update venue details with data from the form
+        venue.name = form.venue.data
+        venue.address1 = form.address1.data
+        venue.address2 = form.address2.data
+        venue.city = form.city.data
+        venue.county = form.county.data
+        venue.postcode = form.postcode.data
+
+        # Commit changes to the database
+        db.session.commit()
+
+        # Flash success message and redirect to venue page
+        flash('Venue details updated successfully', 'success')
+        return redirect(url_for('events.event_page', event_id=venue.id))  # Adjust redirect URL as needed
+
+    # Render template with form
+    return render_template('venues/edit_venue.html', form=form, venue=venue)
 
 
 @bp.route('/event_dashboard/<int:event_id>/add_ticket', methods=['GET','POST'])
@@ -348,31 +359,63 @@ def add_tickets(event_id):
         return redirect(url_for('events.event_dashboard', event_id=event.id))
     return render_template('tickets/add_ticket.html', logged_in = logged_in, form=form, event=event)
 
+from flask import jsonify
+
+@bp.route('/view_ticket/<int:ticket_id>', methods=['GET'])
+@organiser_login_required
+def view_ticket(ticket_id):
+    ticket = TicketType.query.get_or_404(ticket_id)
+    event = Event.query.get_or_404(ticket.event_id)
+    organiser = User.query.get_or_404(event.organiser_id)
+
+    # Convert boolean depositable value to string "Yes" or "No"
+    depositable_text = "Yes" if ticket.depositable else "No"
+
+    deposit_text = ticket.deposit_amount if ticket.depositable else "N/A"
+
+
+    # Return ticket information as JSON
+    return jsonify({
+        'event_name': event.name,
+        'ticket_name': ticket.name,
+        'description': ticket.description,
+        'price': ticket.price,
+        'depositable': depositable_text,
+        'deposit_amount': deposit_text,
+        'max_tickets': ticket.max_tickets,
+        'tickets_sold': ticket.tickets_sold
+    })
+
 @bp.route('/event_dashboard/<int:ticket_id>/edit_ticket', methods=['GET', 'POST'])
 @organiser_login_required
 def edit_ticket(ticket_id):
     logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
-    event = Event.query.get_or_404(ticket.event)
+    event = Event.query.get_or_404(ticket.event_id)  # Use ticket.event_id instead of ticket.event
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to edit this ticket.', 'error')
-        return redirect(url_for('events.event_page', logged_in = logged_in, event_id=event.id))
+        return redirect(url_for('events.event_page', logged_in=logged_in, event_id=event.id))
 
     form = AddTicketForm(obj=ticket)
     if form.validate_on_submit():
-        form.populate_obj(ticket)
-        db.session.commit()
+        ticket.name = form.name.data
+        ticket.price = form.price.data
+        ticket.description = form.description.data
+        ticket.depositable = form.depositable.data
+        ticket.deposit_amount = form.deposit_amount.data
+        ticket.max_tickets = form.max_tickets.data
+        db.session.commit()  # No need to add ticket again
         flash('Ticket updated successfully', 'success')
         return redirect(url_for('events.event_dashboard', event_id=event.id))
-    return render_template('tickets/edit_ticket.html', logged_in = logged_in, form=form, ticket=ticket, event=event)
+    return render_template('events/edit_ticket.html', logged_in=logged_in, form=form, ticket=ticket, event=event)
 
-@bp.route('/event_dashboard/<int:ticket_id>/delete_ticket', methods=['GET', 'POST'])
+@bp.route('/event_dashboard/<int:ticket_id>/delete_ticket', methods=['POST'])
 @organiser_login_required
 def delete_ticket(ticket_id):
     logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
-    event = Event.query.get_or_404(ticket.event)
+    event = Event.query.get_or_404(ticket.event_id)
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to delete this ticket.', 'error')
@@ -381,7 +424,7 @@ def delete_ticket(ticket_id):
     db.session.delete(ticket)
     db.session.commit()
     flash('Ticket deleted successfully', 'success')
-    return redirect(url_for('events.event_page', logged_in = logged_in, event_id=event.id))
+    return redirect(url_for('events.event_dashboard', logged_in = logged_in, event_id=event.id))
 
 @bp.route('/toggle_ticket_active/<int:ticket_id>',  methods=['POST'])
 @organiser_login_required

@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'event.html' %}
 
-{% block content %}
+{% block eventwall %}
 <style>
     .container {
         text-align: center;
@@ -42,12 +42,6 @@
 </style>
 
 <div class="container">
-    <div class="title">
-        <h1>{{ event.name }}</h1>
-        <h2>An event by <a href="{{ url_for('user.organiser_page', id=event.organiser_id) }}">{{
-                organiser.username }}</a></h2>
-    </div>
-
     <div class="date-container">
         <h2>Running: {{ event.start_date }} to {{ event.end_date }}</h2>
     </div>
@@ -58,14 +52,6 @@
         {% else %}
         <!-- Handle case where no cover image is available -->
         <p>No cover image available</p>
-        {% endif %}
-    </div>
-
-    <div class="dashboard">
-        {% if current_user.is_authenticated %}
-        {% if current_user.id == event.organiser_id %}
-        <a href="{{ url_for('events.event_dashboard', event_id=event.id) }}" class="btn btn-primary">Dashboard</a>
-        {% endif %}
         {% endif %}
     </div>
 
@@ -114,7 +100,7 @@
             <div class="col-md-6">
                 <div class="address">
                     <h2>Address:</h2>
-                    <p>{{ venue.name }}</p>
+                    <p><strong>{{ venue.name }}</strong></p>
                     <p>{{ address }}</p>
                 </div>
 
