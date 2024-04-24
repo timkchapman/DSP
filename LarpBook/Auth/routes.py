@@ -1,7 +1,7 @@
 from flask import session,render_template, redirect, url_for, flash, request, get_flashed_messages
 from LarpBook.Auth import bp
 from flask_login import current_user, login_user, logout_user
-from LarpBook.Models.models import User, Image, Album, UserWall, UserContact
+from LarpBook.Models.models import User, Tags, Image, Album, UserWall, UserContact
 from LarpBook.extensions import bcrypt, login_manager
 from LarpBook.Static.Forms.forms import LoginForm, RegistrationForm
 from LarpBook.Utils import authorisation
@@ -45,7 +45,24 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
-            # Create a new user object from the dorm
+
+            # Check if the interest tags already exist
+            user_tags = []
+            tag_names = [tag.strip().lower for tag in form.tags.data.split(',')]
+            for tag_name in tag_names:
+                existing_tag = Tags.query.filter_by(tag = tag_name).first()
+                
+                # If the tag does not exist, create a new tag object
+                if not existing_tag:
+                    new_tag = Tags(tag = tag_name)
+                    db.session.add(new_tag)
+                    db.session.commit()
+                    user_tags.append(new_tag)
+                # If the tag already exists, add the existing tag object to the user's tags
+                else:
+                    user_tags.append(existing_tag)
+
+            # Create a new user object from the form
             new_user = User(
                 username=form.username.data,
                 password=bcrypt.generate_password_hash(form.password.data).decode('utf-8'),
@@ -53,7 +70,8 @@ def register():
                 last_name=form.last_name.data,
                 birth_date=form.birth_date.data,
                 date_joined=datetime.now(),
-                is_organiser=form.is_organiser.data
+                is_organiser=form.is_organiser.data,
+                tags = user_tags
             )
 
             # Add the new user to the database
@@ -65,7 +83,7 @@ def register():
 
             new_user_contact = UserContact(
                 user = user_id,
-                contact_type = 'email',
+                contact_type = 'Email',
                 contact_value = form.email.data,
                 description = 'Primary email address'
             )

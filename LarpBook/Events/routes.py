@@ -5,13 +5,11 @@ from LarpBook.extensions import db
 from LarpBook.Models.models import Event, User, Venue, Album, Image, EventWall, VenueWall, TicketType, Transaction, Ticket, Tags
 from LarpBook.Utils import geocode, authorisation
 from datetime import datetime
-from config import Config
-from LarpBook.Static.Forms.forms import EventForm, AddTicketForm, PaymentMethodForm, ChooseQuantityForm
+from LarpBook.Static.Forms.forms import EventForm, AddTicketForm, EditTagsForm, EditVenueForm
 from LarpBook.Utils.authorisation import organiser_login_required
 from flask_login import current_user
 from reportlab.lib.pagesizes import A5
 from reportlab.pdfgen import canvas
-from reportlab.lib import fonts
 from sqlalchemy import func
 import os
 
@@ -216,20 +214,30 @@ def event_dashboard(event_id):
     logged_in = authorisation.is_user_logged_in()
     event = Event.query.get_or_404(event_id)
 
+    
+
     if event.organiser_id != current_user.id:
         flash('You do not have permission to access this page.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
     
     organiser = User.query.get(event.organiser_id)
     tickets = TicketType.query.filter_by(event_id=event_id).all()
-    
-    return render_template('events/event_dashboard.html', logged_in = logged_in, organiser = organiser, event=event, tickets = tickets)
 
+    edit_tags_form = EditTagsForm()
+    existing_tags = [tag.tag for tag in event.tags]
+    existing_tag_string = ', '.join(existing_tags)
 
-# Route for editing event information
-@bp.route('/event_dashboard/<int:event_id>/edit', methods=['GET', 'POST'])
+    return render_template('events/event_dashboard.html', 
+                           logged_in = logged_in, 
+                           organiser = organiser, 
+                           event=event, 
+                           tickets = tickets, 
+                           tags = existing_tag_string,
+                           edit_tags_form=edit_tags_form)
+
+@bp.route('/edit_tags/<int:event_id>', methods=['GET', 'POST'])
 @organiser_login_required
-def edit_event(event_id):
+def edit_tags(event_id):
     logged_in = authorisation.is_user_logged_in()
     event = Event.query.get_or_404(event_id)
 
@@ -237,57 +245,14 @@ def edit_event(event_id):
         flash('You do not have permission to edit this event.', 'error')
         return redirect(url_for('events.event_page', event_id=event.id))
 
-    # Fetch the associated venue for the event
-    venue = event.venue
-
-    tags = event.tags
-    tag_names = [tag.tag for tag in tags]
-    tag_string = ', '.join(tag_names)
-
-    form = EventForm(obj=event)
-    
-    # Populate venue fields in the form
-    form.tags.data = tag_string
-    form.venue.data = venue.name
-    form.address1.data = venue.address1
-    form.address2.data = venue.address2
-    form.city.data = venue.city
-    form.county.data = venue.county
-    form.postcode.data = venue.postcode
+    form = EditTagsForm()
 
     if form.validate_on_submit():
-        # Check if venue with the given name already exists
-        venue = Venue.query.filter_by(
-            name=form.venue.data
-        ).first()
-
-        # If venue exists, use its id
-        if venue:
-            event.venue_id = venue.id
-        else:
-            # Otherwise, create a new venue and use its id
-            new_venue = Venue(
-                name=form.venue.data,
-                address1=form.address1.data,
-                address2=form.address2.data,
-                city=form.city.data,
-                county=form.county.data,
-                postcode=form.postcode.data
-            )
-            db.session.add(new_venue)
-            db.session.commit()
-            event.venue_id = new_venue.id
-
-        # Update event object with form data
-        event.name = form.name.data
-        event.description = form.description.data
-        event.start_date = form.start_date.data
-        event.end_date = form.end_date.data
 
         # Split the tag string into individual tag names
-        tag_names = [tag.strip() for tag in form.tags.data.split(',')]
+        tag_names = [tag.strip().lower() for tag in form.tags.data.split(',')]
 
-        # Create or fetch existing tags and associate them with the event
+       # Create or fetch existing tags and associate them with the event
         event.tags.clear()  # Clear existing tags
         for tag_name in tag_names:
             # Check if the tag already exists
@@ -303,12 +268,11 @@ def edit_event(event_id):
                 event.tags.append(existing_tag)
 
         db.session.commit()
-        flash('Event updated successfully', 'success')
-        return redirect(url_for('events.event_dashboard', logged_in=logged_in, event_id=event.id))
 
-    
-    return render_template('events/edit_event.html', form=form, event=event)
+        flash('Tags updated successfully', 'success')
+        return redirect(url_for('events.event_dashboard', event_id=event.id))
 
+    return render_template('edit_tags.html', logged_in = logged_in, form=form,)
 
 # Route for deleting an event
 @bp.route('/event_dashboard/<int:event_id>/delete', methods=['POST'])

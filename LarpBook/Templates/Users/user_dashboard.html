@@ -20,6 +20,13 @@
     <p><strong>Date Joined:</strong> {{ user.date_joined }}</p>
     <p><strong>Birth Date:</strong> {{ user.birth_date }}</p>
     <p><strong>About:</strong> {{ user.about }}</p>
+    <p><strong>Interests:</strong> {% for tag in user.tags %}{{ tag.tag }}, {% endfor %}</p>
+    <div class="edit-button">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editTagsModal">Edit
+            Tags</button>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editPasswordModal">Change
+            Password</button>
+    </div>
 
     <div class="contact-info">
         <h2>Contact Information</h2>
@@ -27,9 +34,132 @@
             {% for contact in contacts %}
             <li><strong>{{ contact.contact_type }}:</strong> {{ contact.contact_value }} {% if contact.description %}({{
                 contact.description }}){% endif %}</li>
+            <div class="edit-button">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editEmailModal">Edit
+                    Email</button>
+            </div>
             {% endfor %}
         </ul>
     </div>
 </div>
+
+<!-- Edit Tags Modal -->
+<div class="modal fade" id="editTagsModal" tabindex="-1" role="dialog" aria-labelledby="editTagsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTagsModalLabel">Edit Tags</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('user.edit_tags', id=user.id) }}">
+                    {{ edit_tags_form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ edit_tags_form.tags.label(class="form-control-label") }}
+                        <input type="text" class="form-control" id="tags" name="tags" value="{{ tags }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Tags</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }}">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- Edit Email Modal -->
+<div class="modal fade" id="editEmailModal" tabindex="-1" role="dialog" aria-labelledby="editEmailModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEmailModalLabel">Edit Email</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('user.edit_email', id=user.id) }}">
+                    {{ edit_email_form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ edit_email_form.email.label(class="form-control-label") }}
+                        {{ edit_email_form.email(class="form-control") }}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_email_form.password.label(class="form-control-label") }}
+                        {{ edit_email_form.password(class="form-control") }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Email</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Password Modal -->
+<div class="modal fade" id="editPasswordModal" tabindex="-1" role="dialog" aria-labelledby="editPasswordModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPasswordModalLabel">Change Password</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm" method="POST" action="{{ url_for('user.edit_password', id=user.id) }}">
+                    {{ edit_password_form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ edit_password_form.current_password.label(class="form-control-label") }}
+                        {{ edit_password_form.current_password(class="form-control") }}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_password_form.new_password.label(class="form-control-label") }}
+                        {{ edit_password_form.new_password(class="form-control") }}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_password_form.confirm_password.label(class="form-control-label") }}
+                        {{ edit_password_form.confirm_password(class="form-control") }}
+                    </div>
+                    <button id="submitButton" type="submit" class="btn btn-primary">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to validate password match
+    function validatePassword() {
+        var newPassword = document.getElementById("new_password").value;
+        var confirmPassword = document.getElementById("confirm_password").value;
+        if (newPassword != confirmPassword) {
+            // Display popup or alert if passwords don't match
+            alert("Passwords do not match!");
+            return false;
+        }
+        return true;
+    }
+
+    // Attach event listener to form submit
+    document.getElementById("passwordForm").addEventListener("submit", function (event) {
+        if (!validatePassword()) {
+            // Prevent form submission if passwords don't match
+            event.preventDefault();
+        }
+    });
+</script>
 
 {% endblock %}

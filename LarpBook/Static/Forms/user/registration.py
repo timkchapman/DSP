@@ -11,3 +11,5 @@ class RegistrationForm(FlaskForm):
     last_name = StringField('Last Name', validators=[DataRequired(), Length(max=50)])
     birth_date = DateField('Birth Date (DD-MM-YYYY)', format='%Y-%m-%d', validators=[DataRequired()])
     is_organiser = BooleanField('Are you an organiser?')
+    website = StringField('Website', validators=[Length(max=100)])
+    tags = StringField('Interests, (comma-seperated)')

@@ -10,7 +10,9 @@
             <p>Description: {{ event.description }}</p>
             <p>Start Date: {{ event.start_date }}</p>
             <p>End Date: {{ event.end_date }}</p>
-            <a href="{{ url_for('events.edit_event', event_id=event.id) }}" class="btn btn-secondary">Edit Event</a>
+            <p><strong>Interests:</strong> {% for tag in event.tags %}{{ tag.tag }}, {% endfor %}</p>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editTagsModal">Edit
+                Tags</button>
             <form id="delete-form" action="{{ url_for('events.delete_event', event_id=event.id) }}" method="post">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-danger">Delete Event</button>
@@ -39,6 +41,32 @@
             <p>No tickets available for this event.</p>
             {% endif %}
             <a href="{{ url_for('events.add_tickets', event_id=event.id) }}" class="btn btn-primary">Add Tickets</a>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Tags Modal -->
+<div class="modal fade" id="editTagsModal" tabindex="-1" role="dialog" aria-labelledby="editTagsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTagsModalLabel">Edit Tags</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('events.edit_tags', event_id=event.id) }}">
+                    {{ edit_tags_form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ edit_tags_form.tags.label(class="form-control-label") }}
+                        <input type="text" class="form-control" id="tags" name="tags" value="{{ tags }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Tags</button>
+                </form>
+
+            </div>
         </div>
     </div>
 </div>
