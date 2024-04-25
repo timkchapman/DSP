@@ -323,3 +323,5 @@ def edit_website(id):
         db.session.commit()
         flash('Website updated successfully', 'success')
         return redirect(url_for('user.organiser_dashboard', id=user.id))
+    
+

@@ -4,8 +4,8 @@
 <style>
     .container {
         overflow-y: auto;
-        max-height: 80vh;
-        width: 1000px;
+        max-height: 88vh;
+        width: 100vw;
         margin: 0 auto;
         padding: 0;
     }
@@ -48,6 +48,25 @@
                 <option value="gt500">More than 500</option>
             </select>
             <button type="submit">Apply</button>
+        </form>
+        <form method="GET" action="{{ url_for('events.index') }}">
+            <label for="start_date">Start Date Range:</label>
+            <input type="date" id="start_date" name="start_date">
+            <label for="end_date">End Date Range:</label>
+            <input type="date" id="end_date" name="end_date">
+            <button type="submit">Apply</button>
+        </form>
+        <form method="GET" action="{{ url_for('events.index') }}">
+            <label for="min_price">Min Price:</label>
+            <input type="number" id="min_price" name="min_price" step="0.01">
+            <label for="max_price">Max Price:</label>
+            <input type="number" id="max_price" name="max_price" step="0.01">
+            <button type="submit">Apply</button>
+        </form>
+        <form method="GET" action="{{ url_for('events.index') }}">
+            <label for="q">Search:</label>
+            <input type="text" id="q" name="q" placeholder="Search...">
+            <button type="submit">Search</button>
         </form>
     </div>
     <table class="event-table">

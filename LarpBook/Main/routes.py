@@ -1,13 +1,31 @@
+"""
+This module contains routes and functions related to the index page of LarpBook.
+
+Routes:
+    - /: Renders the index page.
+
+Functions:
+    - index(): Renders the index page, fetching data for the carousel, 
+        latest events, and soonest events.
+"""
+
 from flask import render_template
 from LarpBook.Main import bp
-from LarpBook import db
 from LarpBook.Models import models
-from LarpBook.Utils import carousel_populator, geocode, authorisation
-import time
+from LarpBook.Utils import carousel_populator, authorisation
 
 
 @bp.route('/')
 def index():
+    """
+    Renders the index page of LarpBook.
+
+    Retrieves necessary data for rendering the page including carousel events,
+    latest events, and soonest events. Combines the data and renders the template 'index.html'.
+
+    Returns:
+        str: Rendered HTML template for the index page.
+    """
     logged_in = authorisation.is_user_logged_in()
     if not logged_in:
         print("User is not logged in")
@@ -15,7 +33,7 @@ def index():
     carousel_events = 'LarpBook/Static/JSON/carousel.json'
     carousel = carousel_populator.fetch_events_from_file(carousel_events)
     events = list(enumerate(carousel))
-    
+
     # Fetch all necessary data in one query
     latest_events = models.Event.query.order_by(models.Event.id.desc()).limit(5).all()
     soonest_events = models.Event.query.order_by(models.Event.start_date).limit(5).all()
@@ -39,7 +57,12 @@ def index():
         organiser_name = organiser_names.get(event.organiser_id)
         venue = venue_dict.get(event.venue_id)
         if venue is not None:
-            address_parts = [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]
+            address_parts = [venue.name,
+                             venue.address1,
+                             venue.address2,
+                             venue.city,
+                             venue.county,
+                             venue.postcode]
             address = ", ".join(filter(None, address_parts))
         else:
             address = "Unknown"
@@ -50,7 +73,17 @@ def index():
     for event in soonest_events:
         # Use event ID as the key
         organiser_name = organiser_names.get(event.organiser_id)
-        address = ", ".join(filter(None, [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]))
+        address = ", ".join(filter(None,
+                                   [venue.name,
+                                    venue.address1,
+                                    venue.address2,
+                                    venue.city,
+                                    venue.county,
+                                    venue.postcode]))
         combined_soonest.append((event, organiser_name, address))
-    
-    return render_template('index.html', events=events, combined_data_latest=combined_latest, combined_data_soonest=combined_soonest, logged_in=logged_in)
+
+    return render_template('index.html',
+                           events=events,
+                           combined_data_latest=combined_latest,
+                           combined_data_soonest=combined_soonest,
+                           logged_in=logged_in)

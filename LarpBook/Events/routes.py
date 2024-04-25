@@ -1,37 +1,87 @@
+
+"""
+This module contains routes and functions related to managing events in LarpBook.
+
+Routes and Functions:
+    - /: Renders the index page displaying events and handles event-related functions.
+    - /categories/: Renders the categories page.
+    - /event/<int:event_id>/: Renders the page for a specific event.
+    - /create/: Allows creation of a new event.
+    - /check_venue: Checks venue availability.
+    - /event_dashboard/<int:event_id>: Renders the event dashboard 
+                                        and handles event-related functions.
+    - /edit_event/<int:event_id>: Allows editing of an event.
+    - /event_dashboard/<int:event_id>/delete: Deletes an event.
+    - /edit_venue/<int:venue_id>: Allows editing of a venue.
+    - /event_dashboard/<int:event_id>/add_ticket: Adds tickets to an event.
+    - /view_ticket/<int:ticket_id>: Views ticket details.
+    - /event_dashboard/<int:ticket_id>/edit_ticket: Allows editing of a ticket.
+    - /event_dashboard/<int:ticket_id>/delete_ticket: Deletes a ticket.
+    - /toggle_ticket_active/<int:ticket_id>: Toggles ticket active status.
+    - /checkout/<int:ticket_id>/: Processes ticket checkout.
+    - /simulate_purchase/<int:ticket_id>/<result>: Simulates ticket purchase.
+
+Functions:
+    - index(): Renders the index page.
+    - categories(): Renders the categories page.
+    - event_page(event_id): Renders the event page.
+    - create_event(): Creates a new event.
+    - check_venue(): Checks venue availability.
+    - event_dashboard(event_id): Renders the event dashboard.
+    - edit_event(event_id): Edits an event.
+    - delete_event(event_id): Deletes an event.
+    - edit_venue(venue_id): Edits a venue.
+    - add_tickets(event_id): Adds tickets to an event.
+    - view_ticket(ticket_id): Views ticket details.
+    - edit_ticket(ticket_id): Edits a ticket.
+    - delete_ticket(ticket_id): Deletes a ticket.
+    - toggle_ticket_active(ticket_id): Toggles ticket active status.
+    - checkout(ticket_id): Processes ticket checkout.
+    - simulate_purchase(ticket_id, result): Simulates ticket purchase.
+    - generate_ticket_pdf(ticket, event_name): Generates a PDF ticket.
+"""
+
+import os
+from datetime import datetime
+from sqlalchemy import and_, or_
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_paginate import Pagination
-from LarpBook.Events import bp
-from LarpBook.extensions import db
-from LarpBook.Models.models import Event, User, Venue, Album, Image, EventWall, VenueWall, TicketType, Transaction, Ticket, Tags
-from LarpBook.Utils import geocode, authorisation
-from datetime import datetime
-from LarpBook.Static.Forms.forms import EventForm, EditEventForm, AddTicketForm, EditTagsForm, EditVenueForm
-from LarpBook.Utils.authorisation import organiser_login_required
 from flask_login import current_user
 from reportlab.lib.pagesizes import A5
 from reportlab.pdfgen import canvas
-from sqlalchemy import func
-import os
+from LarpBook.Events import bp
+from LarpBook.extensions import db
+from LarpBook.Models.models import (Event, User, Venue, Album, Image, EventWall,
+                                    VenueWall, TicketType, Transaction, Ticket, Tags)
+from LarpBook.Utils import geocode, authorisation
+from LarpBook.Static.Forms.forms import EventForm, EditEventForm, AddTicketForm, EditVenueForm
+from LarpBook.Utils.authorisation import organiser_login_required
+
+
 
 @bp.route('/')
 def index():
+    """
+    Renders the index page.
+
+    Returns:
+        str: Rendered HTML template.
+    """
     logged_in = authorisation.is_user_logged_in()
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
+
     events_query = Event.query
     events_query = events_query.outerjoin(TicketType)
 
-    tag_filter = request.args.get('tag')
-    tickets_filter = request.args.get('tickets')
-
     # Filter events by tag
+    tag_filter = request.args.get('tag')
     if tag_filter:
         tag_filter = tag_filter.lower()
         events_query = events_query.filter(Event.tags.any(tag=tag_filter))
 
-
     # Filter events by ticket availability
+    tickets_filter = request.args.get('tickets')
     if tickets_filter:
         if tickets_filter == 'lt20':
             events_query = events_query.filter(TicketType.max_tickets <= 20)
@@ -44,9 +94,40 @@ def index():
         elif tickets_filter == 'gt500':
             events_query = events_query.filter(TicketType.max_tickets > 500)
 
+    # Filter events by date range
+    start_date_filter = request.args.get('start_date')
+    end_date_filter = request.args.get('end_date')
+    if start_date_filter and end_date_filter:
+        start_date = datetime.strptime(start_date_filter, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_filter, '%Y-%m-%d').date()
+        events_query = events_query.filter(and_(Event.start_date >= start_date,
+                                                Event.end_date <= end_date))
+    elif start_date_filter:
+        start_date = datetime.strptime(start_date_filter, '%Y-%m-%d').date()
+        events_query = events_query.filter(Event.start_date >= start_date)
+    elif end_date_filter:
+        end_date = datetime.strptime(end_date_filter, '%Y-%m-%d').date()
+        events_query = events_query.filter(Event.end_date <= end_date)
+
+    # Filter events by price range
+    min_price_filter = request.args.get('min_price')
+    max_price_filter = request.args.get('max_price')
+    if min_price_filter and max_price_filter:
+        events_query = events_query.filter(and_(TicketType.price >= float(min_price_filter),
+                                                TicketType.price <= float(max_price_filter)))
+
+    # General search query
+    search_query = request.args.get('q')
+    if search_query:
+        search_query = search_query.lower()
+        events_query = events_query.filter(or_(
+            Event.name.ilike(f'%{search_query}%'),
+            Event.description.ilike(f'%{search_query}%'),
+            User.username.ilike(f'%{search_query}%')  # Include organizer's username in the search
+        ))
 
     events = events_query.all()
-    
+
     organisers = User.query.filter(User.id.in_([event.organiser_id for event in events])).all()
     organiser_names = {organiser.id: organiser.username for organiser in organisers}
 
@@ -60,26 +141,54 @@ def index():
 
     # Filter out past events before formatting the start date
     today = datetime.now().date()
-    combined_data = [(event, organiser_name) for event, organiser_name in combined_data if event.start_date >= today]
+    combined_data = [(event, organiser_name) for event,
+                     organiser_name in combined_data if event.start_date >= today]
 
     # Format start date to display month name and day
-    combined_data = [(event, organiser_name, event.start_date.strftime("%b %d")) for event, organiser_name in combined_data]
+    combined_data = [(event,
+                      organiser_name,
+                      event.start_date.strftime("%b %d")) for event,
+                      organiser_name in combined_data]
 
     # Implement pagination
-    pagination = Pagination(page=page, per_page=per_page, total=len(combined_data), css_framework='bootstrap4')
-    combined_data = combined_data[pagination.page * pagination.per_page - pagination.per_page:pagination.page * pagination.per_page]
+    pagination = Pagination(page=page,
+                            per_page=per_page,
+                            total=len(combined_data),
+                            css_framework='bootstrap4')
 
-    return render_template('events/index.html', events=combined_data, pagination=pagination, logged_in=logged_in)
+    start_index = (pagination.page - 1) * pagination.per_page
+    end_index = pagination.page * pagination.per_page
+    combined_data = combined_data[start_index:end_index]
+
+    return render_template('events/index.html',
+                           events=combined_data,
+                           pagination=pagination,
+                           logged_in=logged_in)
 
 
 @bp.route('/categories/')
 def categories():
-    
+    """
+    Renders the categories page.
+
+    Returns:
+        str: Rendered HTML template.
+    """
     logged_in = authorisation.is_user_logged_in()
-    return render_template('events/categories.html', logged_in=logged_in)
+    return render_template('events/categories.html',
+                           logged_in=logged_in)
 
 @bp.route('/event/<int:event_id>/')
 def event_page(event_id):
+    """
+    Renders the event page.
+
+    Args:
+        event_id (int): The ID of the event.
+
+    Returns:
+        str: Rendered HTML template.
+    """
     logged_in = authorisation.is_user_logged_in()
     event = Event.query.get_or_404(event_id)
     album = Album.query.filter(Album.event.has(id=event_id)).first()
@@ -97,7 +206,12 @@ def event_page(event_id):
     venue = event.venue_id
     venue = Venue.query.get(venue)
     if venue is not None:
-        address_parts = [venue.name, venue.address1, venue.address2, venue.city, venue.county, venue.postcode]
+        address_parts = [venue.name,
+                         venue.address1,
+                         venue.address2,
+                         venue.city,
+                         venue.county,
+                         venue.postcode]
         address = ", ".join(filter(None, address_parts))
     else:
         address = "Unknown"
@@ -112,11 +226,26 @@ def event_page(event_id):
     tickets = TicketType.query.filter_by(event_id=event_id).all()
     for ticket in tickets:
         print(ticket, ticket.available)
-    return render_template('events/eventwall.html', event=event, image = cover_image, organiser = organiser, address = address, venue = venue, lat = lat, lng = lng, logged_in=logged_in, tickets = tickets)
+    return render_template('events/eventwall.html',
+                           event=event,
+                           image = cover_image,
+                           organiser = organiser,
+                           address = address,
+                           venue = venue,
+                           lat = lat,
+                           lng = lng,
+                           logged_in=logged_in,
+                           tickets = tickets)
 
 @bp.route('/create/', methods=['GET', 'POST'])
 @organiser_login_required
 def create_event():
+    """
+    Creates a new event.
+
+    Returns:
+        str: Rendered HTML template for the create event page.
+    """
     logged_in = authorisation.is_user_logged_in()
     form = EventForm()
 
@@ -140,10 +269,10 @@ def create_event():
             db.session.commit()
             venue_id = new_venue.id
 
-            New_venue_wall = VenueWall(
+            new_venue_wall = VenueWall(
                 venue=new_venue.id
             )
-            db.session.add(New_venue_wall)
+            db.session.add(new_venue_wall)
 
         event_tags = []
         tag_names = [tag.strip().lower for tag in form.tags.data.split(',')]
@@ -151,7 +280,7 @@ def create_event():
 
         for tag_name in unique_tags:
             existing_tag = Tags.query.filter_by(tag = tag_name).first()
-            
+
             if not existing_tag:
                 new_tag = Tags(tag = tag_name)
                 db.session.add(new_tag)
@@ -159,7 +288,7 @@ def create_event():
                 event_tags.append(new_tag)
             else:
                 event_tags.append(existing_tag)
-        
+
         new_event = Event(
             organiser_id=current_user.id,
             name=form.name.data,
@@ -184,7 +313,6 @@ def create_event():
         )
         db.session.add(new_album)
         db.session.commit()
-        album = Album.query.filter_by(event_id=new_event.id).first()
 
         new_image = Image(
             name = 'Default',
@@ -196,12 +324,21 @@ def create_event():
         db.session.commit()
 
         flash('Event created successfully', 'success')
-        return redirect(url_for('events.index'))
-    
-    return render_template('events/create.html', form=form, logged_in=logged_in)
+        return redirect(url_for('events.event_dashboard',
+                                event_id=new_event.id))
+
+    return render_template('events/create.html',
+                           form=form,
+                           logged_in=logged_in)
 
 @bp.route('/check_venue')
 def check_venue():
+    """
+    Checks venue availability.
+
+    Returns:
+        str: JSON response containing matching venue names.
+    """
     name = request.args.get('name')
     if name:
         matching_venues = Venue.query.filter(Venue.name.ilike(f'%{name}%')).all()
@@ -213,13 +350,23 @@ def check_venue():
 @bp.route('/event_dashboard/<int:event_id>', methods=['GET', 'POST'])
 @organiser_login_required
 def event_dashboard(event_id):
+    """
+    Renders the event dashboard.
+
+    Args:
+        event_id (int): The ID of the event.
+
+    Returns:
+        str: Rendered HTML template for the event dashboard.
+    """
     logged_in = authorisation.is_user_logged_in()
     event = Event.query.get_or_404(event_id)
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to access this page.', 'error')
-        return redirect(url_for('events.event_page', event_id=event.id))
-    
+        return redirect(url_for('events.event_page',
+                                event_id=event.id))
+
     organiser = User.query.get(event.organiser_id)
     tickets = TicketType.query.filter_by(event_id=event_id).all()
     venue = Venue.query.get(event.venue_id)
@@ -230,12 +377,12 @@ def event_dashboard(event_id):
     existing_tags = [tag.tag for tag in event.tags]
     existing_tag_string = ', '.join(existing_tags)
 
-    return render_template('events/event_dashboard.html', 
-                            logged_in = logged_in, 
-                            organiser = organiser, 
-                            event=event, 
+    return render_template('events/event_dashboard.html',
+                            logged_in = logged_in,
+                            organiser = organiser,
+                            event=event,
                             venue = venue,
-                            tickets = tickets, 
+                            tickets = tickets,
                             tags = existing_tag_string,
                             edit_event_form=edit_event_form,
                             edit_tickets_form=edit_tickets_form,
@@ -244,6 +391,15 @@ def event_dashboard(event_id):
 @bp.route('/edit_event/<int:event_id>', methods=['GET', 'POST'])
 @organiser_login_required
 def edit_event(event_id):
+    """
+    Edits an event.
+
+    Args:
+        event_id (int): The ID of the event.
+
+    Returns:
+        str: Rendered HTML template for the edit event page.
+    """
     logged_in = authorisation.is_user_logged_in()
     event = Event.query.get_or_404(event_id)
 
@@ -261,7 +417,7 @@ def edit_event(event_id):
 
         # Split the tag string into individual tag names
         tag_names = [tag.strip().lower() for tag in form.tags.data.split(',')]
-        
+
         unique_tags = set(tag_names)
 
        # Create or fetch existing tags and associate them with the event
@@ -269,7 +425,7 @@ def edit_event(event_id):
         for tag_name in unique_tags:
             # Check if the tag already exists
             existing_tag = Tags.query.filter_by(tag=tag_name).first()
-            
+
             if not existing_tag:
                 # If tag does not exist, create a new one
                 new_tag = Tags(tag=tag_name)
@@ -288,6 +444,15 @@ def edit_event(event_id):
 @bp.route('/event_dashboard/<int:event_id>/delete', methods=['POST'])
 @organiser_login_required
 def delete_event(event_id):
+    """
+    Deletes an event.
+
+    Args:
+        event_id (int): The ID of the event.
+
+    Returns:
+        str: Redirects to the index page.
+    """
     event = Event.query.get_or_404(event_id)
 
     if event.organiser_id != current_user.id:
@@ -304,6 +469,15 @@ def delete_event(event_id):
 @bp.route('/edit_venue/<int:venue_id>', methods=['GET', 'POST'])
 @organiser_login_required
 def edit_venue(venue_id):
+    """
+    Edits a venue.
+
+    Args:
+        venue_id (int): The ID of the venue.
+
+    Returns:
+        str: Rendered HTML template for the edit venue page.
+    """
     # Fetch venue from database
     venue = Venue.query.get_or_404(venue_id)
 
@@ -325,7 +499,8 @@ def edit_venue(venue_id):
 
         # Flash success message and redirect to venue page
         flash('Venue details updated successfully', 'success')
-        return redirect(url_for('events.event_page', event_id=venue.id))  # Adjust redirect URL as needed
+        return redirect(url_for('events.event_page',
+                                event_id=venue.id))
 
     # Render template with form
     return render_template('venues/edit_venue.html', form=form, venue=venue)
@@ -334,11 +509,20 @@ def edit_venue(venue_id):
 @bp.route('/event_dashboard/<int:event_id>/add_ticket', methods=['GET','POST'])
 @organiser_login_required
 def add_tickets(event_id):
+    """
+    Adds tickets to an event.
+
+    Args:
+        event_id (int): The ID of the event.
+
+    Returns:
+        str: Rendered HTML template for adding tickets to an event.
+    """
     logged_in = authorisation.is_user_logged_in()
     event = Event.query.get_or_404(event_id)
     if not event.organiser_id == current_user.id:
         flash('You do not have permission to add tickets to this event.', 'error')
-        return redirect(url_for('events.event', event_id=event.id))  # Redirect to event detail page or somewhere else
+        return redirect(url_for('events.event', event_id=event.id))
 
     form = AddTicketForm()
     if form.validate_on_submit():
@@ -349,7 +533,7 @@ def add_tickets(event_id):
             price=form.price.data,
             description=form.description.data,
             depositable=form.depositable.data,
-            deposit_amount=form.deposit_amount.data,
+            deposit_amount=deposit_amount,
             max_tickets=form.max_tickets.data,
             tickets_sold=0
         )
@@ -359,14 +543,20 @@ def add_tickets(event_id):
         return redirect(url_for('events.event_dashboard', event_id=event.id))
     return render_template('tickets/add_ticket.html', logged_in = logged_in, form=form, event=event)
 
-from flask import jsonify
-
 @bp.route('/view_ticket/<int:ticket_id>', methods=['GET'])
 @organiser_login_required
 def view_ticket(ticket_id):
+    """
+    Views ticket details.
+
+    Args:
+        ticket_id (int): The ID of the ticket.
+
+    Returns:
+        str: JSON response containing ticket information.
+    """
     ticket = TicketType.query.get_or_404(ticket_id)
     event = Event.query.get_or_404(ticket.event_id)
-    organiser = User.query.get_or_404(event.organiser_id)
 
     # Convert boolean depositable value to string "Yes" or "No"
     depositable_text = "Yes" if ticket.depositable else "No"
@@ -389,6 +579,15 @@ def view_ticket(ticket_id):
 @bp.route('/event_dashboard/<int:ticket_id>/edit_ticket', methods=['GET', 'POST'])
 @organiser_login_required
 def edit_ticket(ticket_id):
+    """
+    Edits a ticket.
+
+    Args:
+        ticket_id (int): The ID of the ticket.
+
+    Returns:
+        str: Rendered HTML template for editing a ticket.
+    """
     logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
     event = Event.query.get_or_404(ticket.event_id)  # Use ticket.event_id instead of ticket.event
@@ -408,11 +607,24 @@ def edit_ticket(ticket_id):
         db.session.commit()  # No need to add ticket again
         flash('Ticket updated successfully', 'success')
         return redirect(url_for('events.event_dashboard', event_id=event.id))
-    return render_template('events/edit_ticket.html', logged_in=logged_in, form=form, ticket=ticket, event=event)
+    return render_template('events/edit_ticket.html',
+                           logged_in=logged_in,
+                           form=form,
+                           ticket=ticket,
+                           event=event)
 
 @bp.route('/event_dashboard/<int:ticket_id>/delete_ticket', methods=['POST'])
 @organiser_login_required
 def delete_ticket(ticket_id):
+    """
+    Deletes a ticket.
+
+    Args:
+        ticket_id (int): The ID of the ticket.
+
+    Returns:
+        str: Redirects to the event dashboard page.
+    """
     logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
     event = Event.query.get_or_404(ticket.event_id)
@@ -429,6 +641,15 @@ def delete_ticket(ticket_id):
 @bp.route('/toggle_ticket_active/<int:ticket_id>',  methods=['POST'])
 @organiser_login_required
 def toggle_ticket_active(ticket_id):
+    """
+    Toggles ticket active status.
+
+    Args:
+        ticket_id (int): The ID of the ticket.
+
+    Returns:
+        str: Redirects to the event dashboard page.
+    """
     logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
 
@@ -440,10 +661,21 @@ def toggle_ticket_active(ticket_id):
     db.session.commit()
     flash('Ticket active status updated successfully', 'success')
 
-    return redirect(url_for('events.event_dashboard', logged_in = logged_in, event_id=ticket.event.id))
+    return redirect(url_for('events.event_dashboard',
+                            logged_in = logged_in,
+                            event_id=ticket.event.id))
 
 @bp.route('/checkout/<int:ticket_id>/', methods=['GET', 'POST'])
 def checkout(ticket_id):
+    """
+    Processes ticket checkout.
+
+    Args:
+        ticket_id (int): The ID of the ticket.
+
+    Returns:
+        str: Rendered HTML template for the ticket checkout page.
+    """
     logged_in = authorisation.is_user_logged_in()
 
     if not logged_in:
@@ -458,14 +690,28 @@ def checkout(ticket_id):
     event = Event.query.get(ticket.event_id)
     organiser = User.query.get(event.organiser_id)
 
-    return render_template('tickets/checkout.html', logged_in = logged_in, ticket=ticket, event=event, organiser=organiser)
+    return render_template('tickets/checkout.html',
+                           logged_in = logged_in,
+                           ticket=ticket,
+                           event=event,
+                           organiser=organiser)
 
 @bp.route('/simulate_purchase/<int:ticket_id>/<result>', methods=['POST'])
 def simulate_purchase(ticket_id, result):
+    """
+    Simulates ticket purchase.
+
+    Args:
+        ticket_id (int): The ID of the ticket.
+        result (str): The result of the purchase simulation.
+
+    Returns:
+        str: Redirects to the checkout page.
+    """
     logged_in = authorisation.is_user_logged_in()
     ticket = TicketType.query.get_or_404(ticket_id)
     if result == 'success':
-        
+
         # Create the ticket for the user
         new_ticket = Ticket(
             event_id=ticket.event_id,
@@ -495,7 +741,9 @@ def simulate_purchase(ticket_id, result):
         db.session.add(transaction)
         db.session.commit()
 
-        return redirect(url_for('events.event_page', logged_in = logged_in, event_id=ticket.event_id))
+        return redirect(url_for('events.event_page',
+                                logged_in = logged_in,
+                                event_id=ticket.event_id))
     elif result == 'failure':
         flash('Ticket purchase failed.', 'error')
 
@@ -514,7 +762,13 @@ def simulate_purchase(ticket_id, result):
     return redirect(url_for('events.checkout', logged_in = logged_in, ticket_id=ticket_id))
 
 def generate_ticket_pdf(ticket, event_name):
+    """
+    Generates a PDF ticket.
 
+    Args:
+        ticket (Ticket): The ticket object.
+        event_name (str): The name of the event.
+    """
     event_name_cleaned = event_name.replace(' ', '_')  # Replace spaces with underscores
     event_dir = os.path.join('LarpBook', 'Static', 'Tickets', event_name_cleaned)
     os.makedirs(event_dir, exist_ok=True)
@@ -528,3 +782,4 @@ def generate_ticket_pdf(ticket, event_name):
     c.line(20, 20, 180, 230)
     c.drawString(100, 500, f'Ticket for {ticket.event.name}')
     c.save()
+    
