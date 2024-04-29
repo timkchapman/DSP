@@ -54,8 +54,9 @@ def organiser_dashboard(id):
     edit_about_form = EditAboutForm()
     edit_website_form = EditWebsiteForm()
 
-    if user.id != id:
-        abort(404)
+    if user.id != current_user.id:
+        flash('You do not have permission to view this dashboard.', 'error')
+        return redirect(url_for('auth.login'))
 
     about = user.about
     website = user.website
@@ -123,8 +124,9 @@ def user_dashboard(id):
 
     user_contact = UserContact.query.filter_by(user=user.id).all()
 
-    if user.id != id:
-        abort(404)
+    if user.id != current_user.id:
+        flash('You do not have permission to view this dashboard.', 'error')
+        return redirect(url_for('auth.login'))
 
     edit_password_form = EditPasswordForm()
     edit_email_form = EditEmailForm()
@@ -153,8 +155,9 @@ def delete_account(id):
     user = User.query.get_or_404(id)
 
     # Check if the current user has permission to delete the account
-    if current_user.id != user.id:
-        abort(404)
+    if current_user.id != current_user.id:
+        flash('You do not have permission to delete this account.', 'error')
+        return redirect(url_for('auth.login'))
 
     # Delete the user
     db.session.delete(user)
@@ -204,9 +207,7 @@ def edit_email(id):
 
     if current_user.id != user.id:
         flash('You do not have permission to edit this user.', 'error')
-        if not user.is_organiser:
-            return redirect(url_for('users.user_page', id=user.id))
-        return redirect(url_for('users.organiser_page', id=user.id))
+        return redirect(url_for('auth.login'))
     
     email_contact = UserContact.query.filter_by(user=user.id).first()
 
@@ -241,9 +242,7 @@ def edit_tags(id):
 
     if current_user.id != user.id:
         flash('You do not have permission to edit this user.', 'error')
-        if not user.is_organiser:
-            return redirect(url_for('user.user_page', id=user.id))
-        return redirect(url_for('users.organiser_page', id=user.id))
+        return redirect(url_for('auth.login'))
 
     form = EditTagsForm()
 
@@ -288,9 +287,7 @@ def edit_about(id):
 
     if current_user.id != user.id:
         flash('You do not have permission to edit this user.', 'error')
-        if not user.is_organiser:
-            return redirect(url_for('user.user_page', id=user.id))
-        return redirect(url_for('users.organiser_page', id=user.id))
+        return redirect(url_for('auth.login'))
 
     form = EditAboutForm()
 
@@ -314,7 +311,7 @@ def edit_website(id):
 
     if current_user.id != user.id:
         flash('You do not have permission to edit this user.', 'error')
-        return redirect(url_for('users.organiser_page', id=user.id))
+        return redirect(url_for('auth.login'))
     
     form = EditWebsiteForm()
 
@@ -323,5 +320,9 @@ def edit_website(id):
         db.session.commit()
         flash('Website updated successfully', 'success')
         return redirect(url_for('user.organiser_dashboard', id=user.id))
+    
+    return render_template('edit_website.html',
+                            logged_in=logged_in,
+                            form=form)
     
 

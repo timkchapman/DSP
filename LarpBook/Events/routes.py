@@ -364,8 +364,7 @@ def event_dashboard(event_id):
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to access this page.', 'error')
-        return redirect(url_for('events.event_page',
-                                event_id=event.id))
+        return redirect(url_for('auth.login'))
 
     organiser = User.query.get(event.organiser_id)
     tickets = TicketType.query.filter_by(event_id=event_id).all()
@@ -405,7 +404,7 @@ def edit_event(event_id):
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to edit this event.', 'error')
-        return redirect(url_for('events.event_page', event_id=event.id))
+        return redirect(url_for('auth.login'))
 
     form = EditEventForm(obj=event)
 
@@ -457,8 +456,7 @@ def delete_event(event_id):
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to delete this event.', 'error')
-        return redirect(url_for('events.event_page', event_id=event.id))
-
+        return redirect(url_for('auth.login'))
 
     db.session.delete(event)
     db.session.commit()
@@ -594,7 +592,7 @@ def edit_ticket(ticket_id):
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to edit this ticket.', 'error')
-        return redirect(url_for('events.event_page', logged_in=logged_in, event_id=event.id))
+        return redirect(url_for('auth.login'))
 
     form = AddTicketForm(obj=ticket)
     if form.validate_on_submit():
@@ -631,12 +629,14 @@ def delete_ticket(ticket_id):
 
     if event.organiser_id != current_user.id:
         flash('You do not have permission to delete this ticket.', 'error')
-        return redirect(url_for('events.event_page', logged_in = logged_in, event_id=event.id))
+        return redirect(url_for('auth.login'))
 
     db.session.delete(ticket)
     db.session.commit()
     flash('Ticket deleted successfully', 'success')
-    return redirect(url_for('events.event_dashboard', logged_in = logged_in, event_id=event.id))
+    return redirect(url_for('events.event_dashboard', 
+                            logged_in = logged_in, 
+                            event_id=event.id))
 
 @bp.route('/toggle_ticket_active/<int:ticket_id>',  methods=['POST'])
 @organiser_login_required
@@ -654,7 +654,7 @@ def toggle_ticket_active(ticket_id):
     ticket = TicketType.query.get_or_404(ticket_id)
 
     if ticket.event.organiser_id != current_user.id:
-        return jsonify({'error': 'You do not have permission to toggle this ticket'})
+        return redirect(url_for('auth.login'))
 
     # Toggle the available status of the ticket
     ticket.available = not ticket.available
